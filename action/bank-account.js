@@ -27,3 +27,28 @@ export async function addBankAccount(formData) {
     throw error;
   }
 }
+
+export async function addBankAccount2(formData) {
+  try {
+    await prisma.bankAccount.create({
+      data: {
+        bankName: formData.bankName,
+        userId: formData.userId,
+        accountNumber: formData.accountNumber || null,
+        iFSC_Code: formData.iFSC_Code || null,
+        branch: formData.branch || null,
+        openingBalance: parseFloat(formData.openingBalance || "0"),
+        accountType: formData.accountType,
+        statuses: formData.statuses,
+        currency: formData.currency,
+        isPrimary: formData.isPrimary === "on",
+        comments: formData.comments || null,
+      },
+    });
+
+    revalidatePath("/bank-account");
+  } catch (error) {
+    console.error("Error adding bank account:", error);
+    throw error;
+  }
+}
