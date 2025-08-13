@@ -21,13 +21,13 @@ pnpx create-next-app@lates
 
 ## This is initial project setup
 
-![alt text](public\assets\Images\image-1.png)
+![alt text](public/assets/Images/image-1.png)
 
 ## 2. Update Layout.js & page.js file
 
 ## 3. Create Action folder for server action
 
-![alt text](public\assets\Images\image-2.png)
+![alt text](public/assets/Images/image-2.png)
 
 ## 4. Add shadcn UI
 
@@ -37,4 +37,4 @@ pnpm dlx shadcn@latest add button
 
 Used Slate UI for project. Now project structure is updated as shown below.
 
-![alt text](public\assets\Images\image-3.png)
+![alt text](public/assets/Images/image-3.png)
