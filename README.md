@@ -8,6 +8,8 @@
 4. Add shadcn to project
 5. Create folder in components - AppLayout, Providers
 6. Added new file ThemeProvider - for that install theme from shadcn
+7. Added AppLayout all folder files - AppSidebar, Navbar, NavMain, NavUser, ModeToggle
+8. Updated Layout file
 
 ## Tech Used
 
@@ -41,6 +43,8 @@ Used Slate UI for project. Now project structure is updated as shown below.
 
 ![alt text](public/assets/Images/image-3.png)
 
+## 5. Create folder in components - AppLayout, Providers
+
 ## 6. Add ThemeProvider.jsx to handle theme
 
 ```pnpm
@@ -64,7 +68,9 @@ Now wrap layout.jsx body tag inside themeprovider
 </html>
 ```
 
-## 7. Add ModeToggle.jsx to handle theme dark mode
+## 7. Added AppLayout all folder files - AppSidebar, Navbar, NavMain, NavUser, ModeToggle
+
+### ModeToggle.jsx
 
 ```jsx
 "use client";
