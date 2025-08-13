@@ -12,7 +12,7 @@
 8. Updated Layout file
 9. Added loading.js and error.js at app level
 10. Created folders structure for Main and Quick
-11.
+11. Added Charts from shadcn
 
 ## Tech Used
 
