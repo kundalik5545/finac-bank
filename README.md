@@ -13,6 +13,7 @@
 9. Added loading.js and error.js at app level
 10. Created folders structure for Main and Quick
 11. Added Charts from shadcn
+12. Added prisma
 
 ## Tech Used
 
@@ -21,8 +22,8 @@
 3. Shadcn
 
 ## Demo
-<img width="1879" height="923" alt="image" src="https://github.com/user-attachments/assets/54ccf117-2e81-405c-8cb4-93e68ec5e9cf" />
 
+<img width="1879" height="923" alt="image" src="https://github.com/user-attachments/assets/54ccf117-2e81-405c-8cb4-93e68ec5e9cf" />
 
 ## 1. Run this - to create NextJs project
 
@@ -107,3 +108,20 @@ export default ModeToggle;
 ```
 
 ## 8. Add AppSidebar.jsx
+
+## 11. NPM command alternative
+
+To Add Prisma in project
+
+```pnpm
+pnpm add prisma -D
+```
+
+To initialize prisma - which will create prisma folder and .env file
+
+```pnpm
+pnpm prisma init
+
+```
+
+Now add our database credentials from supabase in .env file.
