@@ -20,6 +20,10 @@
 2. TailwindCss
 3. Shadcn
 
+## Demo
+<img width="1879" height="923" alt="image" src="https://github.com/user-attachments/assets/54ccf117-2e81-405c-8cb4-93e68ec5e9cf" />
+
+
 ## 1. Run this - to create NextJs project
 
 ```pnpm
