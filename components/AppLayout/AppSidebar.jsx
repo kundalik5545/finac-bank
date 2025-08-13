@@ -13,9 +13,14 @@ import {
 import {
   DollarSign,
   LayoutDashboard,
-  BarChart,
-  File,
-  Plus,
+  List,
+  CirclePlus,
+  ArrowUpDown,
+  Download,
+  Upload,
+  Settings,
+  Search,
+  Calendar,
 } from "lucide-react";
 import Link from "next/link";
 import { NavUser } from "./NavUser";
@@ -35,22 +40,51 @@ export function AppSidebar() {
         icon: LayoutDashboard,
       },
       {
-        title: "Add Bank",
-        url: "/add-bank",
-        icon: Plus,
-      },
-      {
         title: "Transactions",
         url: "/transactions",
-        icon: BarChart,
+        icon: ArrowUpDown,
       },
       {
-        title: "File Handle",
-        url: "/file-handle",
-        icon: File,
+        title: "Add Bank",
+        url: "/bank-account",
+        icon: CirclePlus,
+      },
+      {
+        title: "To Do List",
+        url: "/todo",
+        icon: List,
+      },
+      {
+        title: "Upload Bulk Trans",
+        url: "/bulk-upload",
+        icon: Upload,
+      },
+      {
+        title: "Download Reports",
+        url: "/download-reports",
+        icon: Download,
+      },
+      {
+        title: "Settings",
+        url: "/settings",
+        icon: Settings,
       },
     ],
   };
+
+  const navQuick = [
+    {
+      title: "Search Transactions",
+      url: "/search-transactions",
+      icon: Search,
+    },
+    {
+      title: "Schedule Transactions",
+      url: "/schedule-transactions",
+      icon: Calendar,
+    },
+  ];
+
   return (
     <Sidebar collapsible="offcanvas">
       <SidebarHeader>
@@ -71,7 +105,7 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={data.navMain} navQuick={navQuick} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
