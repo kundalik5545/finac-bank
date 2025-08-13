@@ -1,3 +1,5 @@
+// import prisma from "@/lib/prisma";
+
 import prisma from "@/db/db.config";
 
 export async function getUser() {
