@@ -25,6 +25,7 @@ import {
 import Link from "next/link";
 import { NavUser } from "./NavUser";
 import { NavMain } from "./NavMain";
+import { websiteDetails } from "@/data/website";
 
 export function AppSidebar() {
   const data = {
@@ -97,8 +98,11 @@ export function AppSidebar() {
               <Link href="/">
                 {/* Icon logo */}
                 <DollarSign size="16" />
+                <span className="sr-only">Website Logo</span>
                 {/* App Name */}
-                <span className="text-base font-semibold">Acme Inc.</span>
+                <span className="text-base font-semibold">
+                  {websiteDetails.websiteName}.
+                </span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

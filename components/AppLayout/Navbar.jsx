@@ -23,9 +23,11 @@ import {
 } from "@/components/ui/sidebar";
 import { Bell, LogOut, Settings2, User2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { websiteDetails } from "@/data/website";
 
 const Navbar = () => {
   const isMobile = useIsMobile();
+
   const user = {
     name: "Kundalik Jadhav",
     email: "jk@fm.com",
@@ -39,7 +41,7 @@ const Navbar = () => {
           orientation="vertical"
           className="mx-2 data-[orientation=vertical]:h-4"
         />
-        <h1 className="text-base font-medium">App Name</h1>
+        <h1 className="text-base font-medium">{websiteDetails.websiteName}</h1>
 
         {/* Right Side */}
         <div className="ml-auto flex items-center gap-2">
