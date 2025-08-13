@@ -10,3 +10,7 @@
 ```pnpm
 pnpx create-next-app@lates
 ```
+
+## This is initial project setup
+
+![alt text](image.png)
