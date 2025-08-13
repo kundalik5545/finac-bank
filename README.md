@@ -125,3 +125,31 @@ pnpm prisma init
 ```
 
 Now add our database credentials from supabase in .env file.
+
+## 12. Now create Prisma models and migrate them
+
+To migrate prisma model
+
+```pnpm
+pnpm prisma migrate dev --name created-models
+```
+
+To reset full database migration with prisma
+
+```pnpm
+pnpm prisma migrate reset
+```
+
+## 13. Now create db.config.js file
+
+This file create prisma client which will used to connect with database
+
+```js
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+export default prisma;
+```
+
+## Able to create user and fetch it on UI

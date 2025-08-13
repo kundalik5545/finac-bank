@@ -6,11 +6,156 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../lib/generated/prisma"
+  output   = "../app/generated/prisma"
 }
 
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
+}
+
+enum AccountTypeEnum {
+  SAVING
+  CURRENT
+  SALARY
+}
+
+enum AccountStatusEnum {
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+enum CurrencyEnum {
+  INR
+}
+
+enum CategoryEnum {
+  FOOD
+  BILLS
+  HOTEL
+  RENT
+  HOSPITAL
+}
+
+enum TransacionTypeEnum {
+  INCOME
+  EXPENSE
+  TRANSFER
+  INVESTMENTS
+}
+
+enum TransactionStatusEnum {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum PaymentMethodEnum {
+  UPI
+  CASH
+  CARD
+  ONLINE
+  OTHER
+}
+
+model User {
+  id                 String               @id @default(uuid())
+  clerkUserId        String?              @unique
+  name               String
+  email              String               @unique
+  phone              String?              @unique
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime?            @updatedAt
+  BankAccount        BankAccount[]
+  Transactions       Transactions[]
+  BankAccountBalance BankAccountBalance[]
+
+  @@map("users")
+}
+
+model BankAccount {
+  bankID             Int                  @id @default(autoincrement())
+  bankName           String
+  userId             String
+  accountNumber      String?              @unique
+  iFSC_Code          String?
+  branch             String?
+  openingBalance     Decimal              @default(0)
+  accountType        AccountTypeEnum
+  statuses           AccountStatusEnum
+  currency           CurrencyEnum
+  isPrimary          Boolean              @default(false)
+  comments           String?
+  user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  bankAccountBalance BankAccountBalance[]
+  Transactions       Transactions[]
+
+  @@index([userId])
+  @@map("bankAccount")
+}
+
+model BankAccountBalance {
+  balanceID        Int                   @id @default(autoincrement())
+  bankID           Int
+  totalDeposits    Decimal               @default(0)
+  totalWithdrawals Decimal               @default(0)
+  currentBalance   Decimal               @default(0)
+  comments         String?
+  Statuses         TransactionStatusEnum @default(COMPLETED)
+  bankAccount      BankAccount           @relation(fields: [bankID], references: [bankID], onDelete: Cascade)
+  userId           String?
+  id               User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt()
+
+  @@index([userId])
+  @@map("bankAccountBalance")
+}
+
+model Category {
+  categoryID   Int            @id @default(autoincrement())
+  categoryName String
+  categoryType CategoryEnum
+  subCategory  SubCategory[]
+  Trabsaction  Transactions[]
+
+  @@map("categories")
+}
+
+model SubCategory {
+  subCategoryID   Int            @id @default(autoincrement())
+  subCategoryName String
+  categoryID      Int
+  categories      Category       @relation(fields: [categoryID], references: [categoryID])
+  Trabsaction     Transactions[]
+
+  @@map("subCategory")
+}
+
+model Transactions {
+  transID         Int                   @id @default(autoincrement())
+  bankAccount     BankAccount           @relation(fields: [bankAccountID], references: [bankID])
+  bankAccountID   Int
+  transactionType TransacionTypeEnum
+  category        Category              @relation(fields: [categoryID], references: [categoryID])
+  categoryID      Int
+  subCategory     SubCategory           @relation(fields: [subCategoryID], references: [subCategoryID])
+  subCategoryID   Int
+  amount          Decimal               @default(0)
+  paymentMethod   PaymentMethodEnum
+  isRecurring     Boolean               @default(false)
+  transactionDate DateTime
+  statuses        TransactionStatusEnum @default(COMPLETED)
+  id              User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String?
+  comments        String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@index([userId])
+  @@map("transactions")
 }
