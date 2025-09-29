@@ -1,5 +1,10 @@
 # Finac Bank - Personal Finance Tracker App
 
+## Note
+1. Some work is done
+2. created accounts page, transactions, and todo.
+
+3. 
 ## Setup
 
 1. Create Next Js project
