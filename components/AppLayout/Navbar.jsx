@@ -1,10 +1,5 @@
 "use client";
 
-import React from "react";
-import { Button } from "../ui/button";
-import ModeToggle from "./ModeToggle";
-import { SidebarTrigger } from "../ui/sidebar";
-import { Separator } from "../ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -19,12 +14,16 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
-import { Bell, LogOut, Settings2, User2 } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { websiteDetails } from "@/data/website";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { authClient } from "@/lib/auth-client";
+import { Bell, LogOut, Settings2, User2 } from "lucide-react";
+import { Button } from "../ui/button";
+import { Separator } from "../ui/separator";
+import { SidebarTrigger } from "../ui/sidebar";
+import ModeToggle from "./ModeToggle";
+import { redirect } from "next/navigation";
 
 const Navbar = () => {
   const isMobile = useIsMobile();
@@ -120,7 +119,10 @@ const Navbar = () => {
                     <DropdownMenuItem variant="destructive">
                       <Button
                         variant="ghost"
-                        onClick={() => authClient.signOut()}
+                        onClick={async () => {
+                          await authClient.signOut();
+                          redirect("/");
+                        }}
                       >
                         <LogOut /> Log out
                       </Button>

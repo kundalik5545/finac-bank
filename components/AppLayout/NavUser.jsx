@@ -16,7 +16,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { authClient } from "@/lib/auth-client";
 import { Bell, LogOut, Settings2, User2, EllipsisVertical } from "lucide-react";
+import { redirect } from "next/navigation";
+import { Button } from "../ui/button";
 
 export function NavUser({ user }) {
   const { isMobile } = useSidebar();
@@ -80,8 +83,15 @@ export function NavUser({ user }) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive">
-              <LogOut />
-              Log out
+              <Button
+                variant="ghost"
+                onClick={async () => {
+                  await authClient.signOut();
+                  redirect("/");
+                }}
+              >
+                <LogOut /> Log out
+              </Button>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
+import EditBankAccountForm from "./_components/EditBankAccountForm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import prisma from "@/db/db.config";
-import BankDetailsClient from "./_components/BankDetailsClient";
 
-export default async function BankDetailsPage({ params }) {
+export default async function EditBankAccountPage({ params }) {
   const session = await auth.api.getSession({ headers: await headers() });
   const { id } = await params;
 
@@ -23,15 +23,6 @@ export default async function BankDetailsPage({ params }) {
     notFound();
   }
 
-  // Get active account ID
-  const userPreference = await prisma.userPreference.findUnique({
-    where: { userId: session.user.id },
-  });
-
-  return (
-    <BankDetailsClient
-      account={account}
-      activeAccountId={userPreference?.defaultAccountId || null}
-    />
-  );
+  return <EditBankAccountForm account={account} />;
 }
+

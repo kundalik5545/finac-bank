@@ -15,11 +15,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { addBankSchema } from "@/lib/formSchema";
-import { useState } from "react";
+import { updateBankSchema } from "@/lib/formSchema";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
-export default function AddBankAccountPage() {
+export default function EditBankAccountForm({ account }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
@@ -28,21 +28,33 @@ export default function AddBankAccountPage() {
     formState: { errors },
     setValue,
     watch,
+    reset,
   } = useForm({
-    resolver: zodResolver(addBankSchema),
-    defaultValues: {
-      isActive: true,
-      isPrimary: false,
-      balance: 0,
-      currency: "INR",
-    },
+    resolver: zodResolver(updateBankSchema),
   });
+
+  useEffect(() => {
+    if (account) {
+      reset({
+        name: account.name,
+        type: account.type,
+        currency: account.currency,
+        isActive: account.isActive,
+        balance: Number(account.balance),
+        ifscCode: account.ifscCode || "",
+        branch: account.branch || "",
+        bankId: account.bankId || "",
+        bankAccount: account.bankAccount || "",
+        isPrimary: account.isPrimary,
+      });
+    }
+  }, [account, reset]);
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/bank-accounts", {
-        method: "POST",
+      const response = await fetch(`/api/bank-accounts/${account.id}`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
@@ -50,14 +62,14 @@ export default function AddBankAccountPage() {
       });
 
       if (response.ok) {
-        toast.success("Bank account created successfully");
+        toast.success("Bank account updated successfully");
         router.push("/bank-account");
       } else {
         const error = await response.json();
-        toast.error(error.error || "Failed to create bank account");
+        toast.error(error.error || "Failed to update bank account");
       }
     } catch (error) {
-      toast.error("Failed to create bank account");
+      toast.error("Failed to update bank account");
     } finally {
       setIsSubmitting(false);
     }
@@ -67,7 +79,7 @@ export default function AddBankAccountPage() {
     <div className="container mx-auto max-w-5xl flex justify-center items-center min-h-screen p-3">
       <Card className="w-full shadow-lg">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold">Add Bank Account</CardTitle>
+          <CardTitle className="text-2xl font-bold">Edit Bank Account</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -127,9 +139,9 @@ export default function AddBankAccountPage() {
               )}
             </div>
 
-            {/* Opening Balance */}
+            {/* Balance */}
             <div className="space-y-2">
-              <Label htmlFor="balance">Opening Balance</Label>
+              <Label htmlFor="balance">Balance</Label>
               <Input
                 id="balance"
                 type="number"
@@ -138,7 +150,9 @@ export default function AddBankAccountPage() {
                 placeholder="0.00"
               />
               {errors.balance && (
-                <p className="text-sm text-red-500">{errors.balance.message}</p>
+                <p className="text-sm text-red-500">
+                  {errors.balance.message}
+                </p>
               )}
             </div>
 
@@ -148,8 +162,8 @@ export default function AddBankAccountPage() {
               <div className="flex-1 space-y-2">
                 <Label>Account Type</Label>
                 <Select
+                  value={watch("type")}
                   onValueChange={(value) => setValue("type", value)}
-                  required
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select account type" />
@@ -170,8 +184,8 @@ export default function AddBankAccountPage() {
               <div className="flex-1 space-y-2">
                 <Label>Currency</Label>
                 <Select
+                  value={watch("currency")}
                   onValueChange={(value) => setValue("currency", value)}
-                  defaultValue="INR"
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select currency" />
@@ -221,7 +235,7 @@ export default function AddBankAccountPage() {
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Adding..." : "Add Bank Account"}
+                {isSubmitting ? "Updating..." : "Update Bank Account"}
               </Button>
             </div>
           </form>
@@ -230,3 +244,4 @@ export default function AddBankAccountPage() {
     </div>
   );
 }
+
