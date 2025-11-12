@@ -1,13 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-generator client {
-  provider = "prisma-client-js"
-  // output   = "../app/generated/prisma"
-}
+// schema.prisma
 
 datasource db {
   provider  = "postgresql"
@@ -15,44 +6,56 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-enum AccountTypeEnum {
-  SAVING
-  CURRENT
-  SALARY
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
 }
 
-enum AccountStatusEnum {
-  ACTIVE
-  SUSPENDED
-  CLOSED
+enum AccountType {
+  BANK
+  WALLET
+  CASH
+  CREDIT_CARD
 }
 
-enum CurrencyEnum {
-  INR
-}
-
-enum CategoryEnum {
-  FOOD
-  BILLS
-  HOTEL
-  RENT
-  HOSPITAL
-}
-
-enum TransacionTypeEnum {
+enum TransactionType {
   INCOME
   EXPENSE
   TRANSFER
-  INVESTMENTS
+  INVESTMENT
 }
 
-enum TransactionStatusEnum {
+enum TransactionStatus {
   PENDING
   COMPLETED
   FAILED
 }
 
-enum PaymentMethodEnum {
+enum CategoryType {
+  INCOME
+  EXPENSE
+  TRANSFER
+  INVESTMENT
+}
+
+enum RecurringFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum Currency {
+  INR
+  USD
+}
+
+enum PaymentMethod {
   UPI
   CASH
   CARD
@@ -60,102 +63,244 @@ enum PaymentMethodEnum {
   OTHER
 }
 
-model User {
-  id                 String               @id @default(uuid())
-  clerkUserId        String?              @unique
-  name               String
-  email              String               @unique
-  phone              String?              @unique
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime?            @updatedAt
-  BankAccount        BankAccount[]
-  Transactions       Transactions[]
-  BankAccountBalance BankAccountBalance[]
-
-  @@map("users")
-}
-
-model BankAccount {
-  bankID             Int                  @id @default(autoincrement())
-  bankName           String
-  userId             String
-  accountNumber      String?              @unique
-  iFSC_Code          String?
-  branch             String?
-  openingBalance     Decimal              @default(0)
-  accountType        AccountTypeEnum
-  statuses           AccountStatusEnum
-  currency           CurrencyEnum
-  isPrimary          Boolean              @default(false)
-  comments           String?
-  user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
-  bankAccountBalance BankAccountBalance[]
-  Transactions       Transactions[]
-
-  @@index([userId])
-  @@map("bankAccount")
-}
-
-model BankAccountBalance {
-  balanceID        Int                   @id @default(autoincrement())
-  bankID           Int
-  totalDeposits    Decimal               @default(0)
-  totalWithdrawals Decimal               @default(0)
-  currentBalance   Decimal               @default(0)
-  comments         String?
-  Statuses         TransactionStatusEnum @default(COMPLETED)
-  bankAccount      BankAccount           @relation(fields: [bankID], references: [bankID], onDelete: Cascade)
-  userId           String?
-  id               User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt()
-
-  @@index([userId])
-  @@map("bankAccountBalance")
-}
-
 model Category {
-  categoryID   Int            @id @default(autoincrement())
-  categoryName String
-  categoryType CategoryEnum
-  subCategory  SubCategory[]
-  Trabsaction  Transactions[]
+  id        String       @id @default(uuid())
+  name      String
+  type      CategoryType
+  color     String?
+  icon      String?
+  user      User?        @relation(fields: [userId], references: [id])
+  userId    String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
-  @@map("categories")
+  subCategories         SubCategory[]
+  transactions          Transaction[]
+  budgets               Budget[]
+  recurringTransactions RecurringTransaction[]
+
+  @@index([userId])
 }
 
 model SubCategory {
-  subCategoryID   Int            @id @default(autoincrement())
-  subCategoryName String
-  categoryID      Int
-  categories      Category       @relation(fields: [categoryID], references: [categoryID])
-  Trabsaction     Transactions[]
+  id         String   @id @default(uuid())
+  name       String
+  color      String?
+  icon       String?
+  user       User?    @relation(fields: [userId], references: [id])
+  userId     String?
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  @@map("subCategory")
+  transactions Transaction[]
+
+  @@index([categoryId, userId])
 }
 
-model Transactions {
-  transID         Int                   @id @default(autoincrement())
-  bankAccount     BankAccount           @relation(fields: [bankAccountID], references: [bankID])
-  bankAccountID   Int
-  transactionType TransacionTypeEnum
-  category        Category              @relation(fields: [categoryID], references: [categoryID])
-  categoryID      Int
-  subCategory     SubCategory           @relation(fields: [subCategoryID], references: [subCategoryID])
-  subCategoryID   Int
-  amount          Decimal               @default(0)
-  paymentMethod   PaymentMethodEnum
-  isRecurring     Boolean               @default(false)
-  transactionDate DateTime
-  statuses        TransactionStatusEnum @default(COMPLETED)
-  id              User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId          String?
-  comments        String?
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
+model BankAccount {
+  id          String      @id @default(uuid())
+  name        String
+  type        AccountType
+  currency    Currency
+  isActive    Boolean     @default(true)
+  balance     Decimal     @default(0.0) @db.Decimal(65, 4)
+  ifscCode    String?
+  branch      String?
+  bankId      String?
+  bankAccount String?
+  isPrimary   Boolean     @default(false)
+
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions    Transaction[]
+  accountBalances AccountBalance[]
 
   @@index([userId])
-  @@map("transactions")
+}
+
+model Transaction {
+  id          String            @id @default(uuid())
+  amount      Decimal           @db.Decimal(65, 4)
+  currency    Currency
+  type        TransactionType
+  status      TransactionStatus @default(PENDING)
+  date        DateTime
+  description String?
+  comments    String?
+  isActive    Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id])
+  bankAccountId String
+
+  category   Category? @relation(fields: [categoryId], references: [id])
+  categoryId String?
+
+  subCategory   SubCategory? @relation(fields: [subCategoryId], references: [id])
+  subCategoryId String?
+
+  recurringTransaction   RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id])
+  recurringTransactionId String?
+
+  paymentMethod PaymentMethod?
+  externalId    String? // for bank import linking
+
+  budget   Budget? @relation(fields: [budgetId], references: [id])
+  budgetId String?
+
+  @@index([userId])
+  @@index([bankAccountId])
+  @@index([categoryId])
+  @@index([date])
+}
+
+model AccountBalance {
+  id              String      @id @default(uuid())
+  bankAccount     BankAccount @relation(fields: [bankAccountId], references: [id])
+  bankAccountId   String
+  date            DateTime
+  totalDeposit    Decimal     @default(0.0) @db.Decimal(65, 4)
+  totalWithdrawal Decimal     @default(0.0) @db.Decimal(65, 4)
+  currentBalance  Decimal     @db.Decimal(65, 4)
+  bankId          String?
+  bankAccounts    String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([bankAccountId, date])
+}
+
+model Budget {
+  id               String  @id @default(uuid())
+  amount           Decimal @db.Decimal(65, 4)
+  month            Int? // numeric month (1-12) or use startDate/endDate
+  description      String?
+  totalDeposits    Decimal @default(0.0) @db.Decimal(65, 4)
+  totalWithdrawals Decimal @default(0.0) @db.Decimal(65, 4)
+
+  user       User      @relation(fields: [userId], references: [id])
+  userId     String
+  category   Category? @relation(fields: [categoryId], references: [id])
+  categoryId String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  transactions Transaction[]
+
+  @@index([userId, categoryId])
+}
+
+model RecurringTransaction {
+  id            String             @id @default(uuid())
+  amount        Decimal            @db.Decimal(65, 4)
+  frequency     RecurringFrequency
+  description   String?
+  startDate     DateTime
+  endDate       DateTime?
+  status        TransactionStatus  @default(PENDING)
+  lastProcessed DateTime?
+  user          User               @relation(fields: [userId], references: [id])
+  userId        String
+  category      Category?          @relation(fields: [categoryId], references: [id])
+  categoryId    String?
+  isActive      Boolean            @default(true)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  transactions Transaction[] // generated instances of recurring runs
+
+  @@index([userId, frequency])
+}
+
+model UserPreference {
+  id                 String   @id @default(uuid())
+  user               User     @relation(fields: [userId], references: [id])
+  userId             String   @unique
+  currency           Currency @default(INR)
+  dateFormat         String? // e.g., "DD/MM/YYYY"
+  theme              String? // "light" | "dark" | custom
+  defaultAccountId   String? // optional FK to Account (not enforced) - stored as id
+  defaultCategoryId  String? // optional FK to Category
+  emailNotifications Boolean  @default(true)
+  budgetAlerts       Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model User {
+  id              String                 @id
+  name            String
+  email           String
+  emailVerified   Boolean                @default(false)
+  image           String?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @default(now()) @updatedAt
+  sessions        Session[]
+  accounts        Account[]
+  bankAccounts    BankAccount[]
+  transactions    Transaction[]
+  categories      Category[]
+  subCategories   SubCategory[]
+  budgets         Budget[]
+  recurringTrans  RecurringTransaction[]
+  userPreferences UserPreference?
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@map("verification")
 }
