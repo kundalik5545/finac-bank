@@ -24,6 +24,7 @@ import {
 import { Bell, LogOut, Settings2, User2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { websiteDetails } from "@/data/website";
+import { authClient } from "@/lib/auth-client";
 
 const Navbar = () => {
   const isMobile = useIsMobile();
@@ -117,8 +118,12 @@ const Navbar = () => {
                     </DropdownMenuGroup>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem variant="destructive">
-                      <LogOut />
-                      Log out
+                      <Button
+                        variant="ghost"
+                        onClick={() => authClient.signOut()}
+                      >
+                        <LogOut /> Log out
+                      </Button>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
