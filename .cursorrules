@@ -1,0 +1,266 @@
+# Finac Bank - Personal Finance Tracker Project Rules
+
+## Project Overview
+
+This is a Next.js 15 personal finance management application that helps users track bank accounts, transactions, and financial data. The project uses React Server Components, Prisma ORM, and shadcn/ui components.
+
+## Tech Stack
+
+- **Framework**: Next.js 15.4.6 (App Router with Turbopack)
+- **React**: 19.1.0
+- **Database**: PostgreSQL with Prisma ORM 6.14.0
+- **Styling**: Tailwind CSS 4 with shadcn/ui components
+- **Form Handling**: React Hook Form with Zod validation
+- **Icons**: Lucide React
+- **Theme**: next-themes for dark/light mode
+- **Package Manager**: pnpm
+
+## Project Structure
+
+### Directory Organization
+
+```
+/
+├── action/              # Server actions for data operations
+│   ├── bank-account.js
+│   └── user.js
+├── app/                 # Next.js App Router pages
+│   ├── (main)/          # Main application routes (with sidebar)
+│   │   ├── bank-account/
+│   │   ├── bulk-upload/
+│   │   ├── dashboard/
+│   │   ├── settings/
+│   │   ├── todo/
+│   │   ├── transactions/
+│   │   └── layout.js    # Main layout with sidebar
+│   ├── (Quick)/         # Quick access routes
+│   │   ├── schedule-transactions/
+│   │   ├── search-transactions/
+│   │   └── layout.js
+│   ├── layout.js        # Root layout
+│   ├── page.js          # Home page
+│   ├── error.js         # Error boundary
+│   ├── loading.js       # Loading UI
+│   └── not-found.jsx    # 404 page
+├── components/          # React components
+│   ├── AppLayout/       # Layout components (Sidebar, Navbar, etc.)
+│   ├── Providers/       # Context providers (ThemeProvider)
+│   └── ui/              # shadcn/ui components
+├── data/                # Static data/config files
+├── db/                  # Database configuration
+│   └── db.config.js     # Prisma client instance
+├── hooks/               # Custom React hooks
+├── lib/                 # Utility functions and configurations
+│   ├── formSchema.js    # Zod validation schemas
+│   ├── prisma.js        # Prisma client helper
+│   └── utils.js         # General utilities
+└── prisma/              # Prisma schema and migrations
+    └── schema.prisma    # Database schema
+```
+
+## File Naming Conventions
+
+### Pages and Components
+
+- **Pages**: Use `page.jsx` or `page.js` for Next.js pages
+- **Components**: Use PascalCase (e.g., `BankCard.jsx`, `NavUser.jsx`)
+- **Server Actions**: Use kebab-case (e.g., `bank-account.js`, `user.js`)
+- **Hooks**: Use camelCase with `use-` prefix (e.g., `use-formatCurrency.js`)
+- **Utilities**: Use camelCase (e.g., `formSchema.js`, `utils.js`)
+
+### Route Groups
+
+- `(main)`: Main application routes with full sidebar layout
+- `(Quick)`: Quick access routes with minimal layout
+
+## Code Patterns and Best Practices
+
+### Server Actions
+
+- Place all server actions in the `action/` directory
+- Import Prisma from `@/db/db.config` (not from `@/lib/prisma`)
+- Always use try-catch blocks for error handling
+- Return meaningful error messages
+
+```javascript
+// Example: action/user.js
+import prisma from "@/db/db.config";
+
+export async function getUser() {
+  try {
+    const allUsers = await prisma.user.findMany();
+    return allUsers;
+  } catch (error) {
+    console.log("Error while fetching users", error);
+    throw new Error("Error while fetching users", error);
+  }
+}
+```
+
+### Form Validation
+
+- Use Zod schemas defined in `lib/formSchema.js`
+- Export schemas with descriptive names (e.g., `addBankSchema`)
+- Use React Hook Form with `@hookform/resolvers/zod`
+
+### Component Structure
+
+- Use Server Components by default (async functions)
+- Use `"use client"` directive only when needed (interactivity, hooks, browser APIs)
+- Keep components in `_components/` folder within feature routes
+- Use shadcn/ui components from `@/components/ui/`
+
+### Imports
+
+- Use `@/` alias for absolute imports (configured in jsconfig.json)
+- Group imports: React/Next.js → Components → Utils → Types
+- Example:
+
+```javascript
+import { Inter } from "next/font/google";
+import "./globals.css";
+import { AppSidebar } from "@/components/AppLayout/AppSidebar";
+import { SidebarInset } from "@/components/ui/sidebar";
+import prisma from "@/db/db.config";
+```
+
+### Styling
+
+- Use Tailwind CSS utility classes
+- Use shadcn/ui components for consistent UI
+- Follow responsive design patterns: `md:`, `lg:`, `xl:` breakpoints
+- Container classes: `container mx-auto md:max-w-5xl lg:max-w-7xl xl:max-w-full`
+
+## Database Schema Overview
+
+### Models
+
+- **User**: User accounts with Clerk integration
+- **BankAccount**: Bank account information
+- **BankAccountBalance**: Balance tracking for accounts
+- **Category**: Transaction categories (FOOD, BILLS, HOTEL, RENT, HOSPITAL)
+- **SubCategory**: Sub-categories for transactions
+- **Transactions**: Financial transactions (INCOME, EXPENSE, TRANSFER, INVESTMENTS)
+
+### Enums
+
+- `AccountTypeEnum`: SAVING, CURRENT, SALARY
+- `AccountStatusEnum`: ACTIVE, SUSPENDED, CLOSED
+- `CurrencyEnum`: INR
+- `CategoryEnum`: FOOD, BILLS, HOTEL, RENT, HOSPITAL
+- `TransacionTypeEnum`: INCOME, EXPENSE, TRANSFER, INVESTMENTS
+- `TransactionStatusEnum`: PENDING, COMPLETED, FAILED
+- `PaymentMethodEnum`: UPI, CASH, CARD, ONLINE, OTHER
+
+### Database Access
+
+- Always use Prisma client from `@/db/db.config`
+- Use proper error handling in database operations
+- Follow Prisma best practices for queries and relations
+
+## Layout Structure
+
+### Root Layout (`app/layout.js`)
+
+- Wraps entire app with ThemeProvider
+- Includes SidebarProvider and AppSidebar
+- Contains Navbar and main content area
+- Uses SidebarInset for main content
+
+### Route Group Layouts
+
+- `(main)/layout.js`: Full sidebar layout for main features
+- `(Quick)/layout.js`: Minimal layout for quick access features
+
+## Component Guidelines
+
+### AppLayout Components
+
+- `AppSidebar.jsx`: Main sidebar navigation
+- `Navbar.jsx`: Top navigation bar
+- `NavMain.jsx`: Main navigation items
+- `NavUser.jsx`: User profile section
+- `ModeToggle.jsx`: Theme toggle button
+
+### UI Components
+
+- All shadcn/ui components in `components/ui/`
+- Use consistent component props and variants
+- Follow shadcn/ui patterns for customization
+
+## Routing Patterns
+
+### Dynamic Routes
+
+- Use `[id]` for dynamic segments (e.g., `details/[id]/page.jsx`)
+- Access params via `params` prop in Server Components
+
+### Route Organization
+
+- Feature-based routing (e.g., `/bank-account`, `/transactions`)
+- Nested routes for related features (e.g., `/bank-account/add`, `/transactions/details/[id]`)
+
+## Environment Variables
+
+- Database connection: `DATABASE_URL` and `DIRECT_URL`
+- Store in `local.env` (not committed to git)
+- Use for Prisma datasource configuration
+
+## Development Workflow
+
+### Prisma Commands
+
+- Generate client: `pnpm prisma generate` (runs on postinstall)
+- Create migration: `pnpm prisma migrate dev --name <migration-name>`
+- Reset database: `pnpm prisma migrate reset`
+
+### Running the Project
+
+- Development: `pnpm dev` (uses Turbopack)
+- Build: `pnpm build`
+- Start: `pnpm start`
+- Lint: `pnpm lint`
+
+## Code Style
+
+### JavaScript/JSX
+
+- Use modern ES6+ syntax
+- Prefer async/await over promises
+- Use functional components
+- Use Server Components by default, Client Components when needed
+
+### React Patterns
+
+- Use Server Components for data fetching
+- Use Client Components for interactivity
+- Pass data from Server to Client Components via props
+- Use proper TypeScript/PropTypes when needed
+
+## Common Patterns
+
+### Data Fetching
+
+- Fetch data in Server Components (async functions)
+- Use server actions for mutations
+- Handle loading and error states appropriately
+
+### Form Handling
+
+- Use React Hook Form with Zod validation
+- Define schemas in `lib/formSchema.js`
+- Use shadcn/ui form components
+
+### Error Handling
+
+- Use try-catch in server actions
+- Implement error boundaries (`app/error.js`)
+- Provide user-friendly error messages
+
+## Notes
+
+- The project uses Next.js 15 App Router exclusively
+- All pages are Server Components unless marked with `"use client"`
+- Prisma client is generated to `lib/generated/prisma/`
+- Theme system supports dark/light mode via next-themes
+- Sidebar is collapsible and responsive
