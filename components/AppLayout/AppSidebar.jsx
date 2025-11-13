@@ -22,6 +22,7 @@ import {
   Settings,
   Tags,
   Upload,
+  Wallet,
 } from "lucide-react";
 import Link from "next/link";
 import { NavMain } from "./NavMain";
@@ -54,6 +55,16 @@ export function AppSidebar() {
         title: "Categories",
         url: "/categories",
         icon: Tags,
+      },
+      {
+        title: "Budgets",
+        url: "/budgets",
+        icon: Wallet,
+      },
+      {
+        title: "Recurring Transactions",
+        url: "/recurring-transactions",
+        icon: Calendar,
       },
       {
         title: "To Do List",

@@ -3,6 +3,8 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import prisma from "@/db/db.config";
 import { transactionSchema, transactionFilterSchema } from "@/lib/formSchema";
+import { updateBankBalance } from "@/lib/balance-utils";
+import { revalidatePath } from "next/cache";
 
 export async function GET(request) {
   try {
@@ -318,32 +320,82 @@ export async function POST(request) {
       userId: session.user.id,
     };
 
-    const transaction = await prisma.transaction.create({
-      data: transactionData,
-      include: {
-        bankAccount: {
-          select: {
-            id: true,
-            name: true,
-            type: true,
+    // Use Prisma transaction for atomicity
+    const result = await prisma.$transaction(async (tx) => {
+      // Create transaction
+      const transaction = await tx.transaction.create({
+        data: transactionData,
+        include: {
+          bankAccount: {
+            select: {
+              id: true,
+              name: true,
+              type: true,
+            },
+          },
+          category: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          subCategory: {
+            select: {
+              id: true,
+              name: true,
+            },
           },
         },
-        category: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        subCategory: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
+      });
+
+      // Update bank balance if transaction is COMPLETED
+      await updateBankBalance(transaction, null, "create", tx);
+
+      return transaction;
     });
 
-    return NextResponse.json({ transaction }, { status: 201 });
+    // Check and update budgets if transaction is EXPENSE and COMPLETED
+    if (result.type === "EXPENSE" && result.status === "COMPLETED" && result.categoryId) {
+      try {
+        const transactionDate = new Date(result.date);
+        const month = transactionDate.getMonth() + 1;
+        const year = transactionDate.getFullYear();
+
+        // Find matching budget
+        const budget = await prisma.budget.findFirst({
+          where: {
+            userId: session.user.id,
+            categoryId: result.categoryId,
+            month,
+            year,
+            isActive: true,
+          },
+        });
+
+        if (budget) {
+          // Update budget totals
+          const { updateBudgetTotals } = await import("@/action/budget");
+          await updateBudgetTotals(budget.id);
+
+          // Check and send alerts (async, don't wait)
+          const { checkAndSendBudgetAlerts } = await import("@/lib/budget-alerts");
+          checkAndSendBudgetAlerts(budget.id, session.user.id).catch((err) => {
+            console.error("Error sending budget alerts:", err);
+          });
+        }
+      } catch (error) {
+        console.error("Error checking budget for transaction:", error);
+        // Don't fail the transaction creation if budget check fails
+      }
+    }
+
+    // Revalidate paths to refresh pages
+    revalidatePath("/transactions");
+    revalidatePath("/dashboard");
+    revalidatePath("/bank-account");
+    revalidatePath("/budgets");
+
+    return NextResponse.json({ transaction: result }, { status: 201 });
   } catch (error) {
     console.error("Error creating transaction:", error);
     

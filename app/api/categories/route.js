@@ -15,7 +15,7 @@ export async function GET() {
       );
     }
 
-    const categories = await prisma.category.findMany({
+    let categories = await prisma.category.findMany({
       where: {
         userId: session.user.id,
       },
@@ -26,10 +26,57 @@ export async function GET() {
           },
         },
       },
-      orderBy: {
-        name: "asc",
-      },
+      orderBy: [
+        {
+          position: "asc",
+        },
+        {
+          name: "asc",
+        },
+      ],
     });
+
+    // Initialize positions for categories that don't have one
+    const categoriesWithoutPosition = categories.filter((cat) => cat.position === null);
+    if (categoriesWithoutPosition.length > 0) {
+      const maxPosition = Math.max(
+        ...categories
+          .filter((cat) => cat.position !== null)
+          .map((cat) => cat.position),
+        0
+      );
+
+      await prisma.$transaction(
+        categoriesWithoutPosition.map((cat, index) =>
+          prisma.category.update({
+            where: { id: cat.id },
+            data: { position: maxPosition + index + 1 },
+          })
+        )
+      );
+
+      // Refetch categories with updated positions
+      categories = await prisma.category.findMany({
+        where: {
+          userId: session.user.id,
+        },
+        include: {
+          subCategories: {
+            orderBy: {
+              name: "asc",
+            },
+          },
+        },
+        orderBy: [
+          {
+            position: "asc",
+          },
+          {
+            name: "asc",
+          },
+        ],
+      });
+    }
 
     return NextResponse.json({ categories });
   } catch (error) {
@@ -55,10 +102,28 @@ export async function POST(request) {
     const body = await request.json();
     const validatedData = addCategorySchema.parse(body);
 
+    // Get the maximum position for this user's categories
+    const maxPositionCategory = await prisma.category.findFirst({
+      where: {
+        userId: session.user.id,
+      },
+      orderBy: {
+        position: "desc",
+      },
+      select: {
+        position: true,
+      },
+    });
+
+    const nextPosition = maxPositionCategory?.position
+      ? maxPositionCategory.position + 1
+      : 1;
+
     const category = await prisma.category.create({
       data: {
         ...validatedData,
         userId: session.user.id,
+        position: nextPosition,
       },
     });
 

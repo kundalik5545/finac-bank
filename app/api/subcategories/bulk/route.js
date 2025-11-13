@@ -3,6 +3,7 @@
  *
  * This endpoint handles bulk upload of subcategories from Excel files.
  * Users must have categories first, then upload subcategories with category IDs.
+ * OPTIMIZED: Uses batch operations for better performance.
  *
  * POST /api/subcategories/bulk
  *
@@ -27,6 +28,10 @@ import { parseExcelToJSON } from "@/lib/excelParser";
 
 // Maximum file size: 5MB
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+// Batch size for processing (process in chunks to avoid memory issues)
+const BATCH_SIZE = 100;
+// Increased timeout for large files
+const TRANSACTION_TIMEOUT = 120000; // 2 minutes
 
 export async function POST(request) {
   try {
@@ -107,7 +112,7 @@ export async function POST(request) {
       );
     }
 
-    // Get user's categories for validation
+    // Get user's categories for validation (single query)
     const userCategories = await prisma.category.findMany({
       where: {
         userId: session.user.id,
@@ -119,8 +124,24 @@ export async function POST(request) {
       },
     });
 
-    const categoryIds = userCategories.map((cat) => cat.id);
+    const categoryIds = new Set(userCategories.map((cat) => cat.id));
     const categoryMap = new Map(userCategories.map((cat) => [cat.id, cat]));
+
+    // Get existing subcategories in batch (single query for all)
+    const existingSubCategories = await prisma.subCategory.findMany({
+      where: {
+        userId: session.user.id,
+      },
+      select: {
+        name: true,
+        categoryId: true,
+      },
+    });
+
+    // Create a Set for fast duplicate checking: "name|categoryId"
+    const existingSubCategoryKeys = new Set(
+      existingSubCategories.map((sub) => `${sub.name}|${sub.categoryId}`)
+    );
 
     // Validate and parse each row
     const validatedRows = [];
@@ -135,14 +156,24 @@ export async function POST(request) {
         const validatedRow = bulkSubCategoryRowSchema.parse(row);
 
         // Validate categoryId exists and belongs to user
-        if (!categoryIds.includes(validatedRow.categoryId)) {
+        if (!categoryIds.has(validatedRow.categoryId)) {
           throw new Error(
             `Category ID "${validatedRow.categoryId}" not found. Please use a valid category ID from your categories.`
           );
         }
 
+        // Check for duplicates using Set lookup (O(1) instead of database query)
+        const duplicateKey = `${validatedRow.name}|${validatedRow.categoryId}`;
+        if (existingSubCategoryKeys.has(duplicateKey)) {
+          continue; // Skip duplicates silently
+        }
+
         validatedRows.push({
-          ...validatedRow,
+          name: validatedRow.name,
+          icon: validatedRow.icon || null,
+          color: validatedRow.color || null,
+          categoryId: validatedRow.categoryId,
+          userId: session.user.id,
           _rowNumber: rowNumber,
         });
       } catch (error) {
@@ -159,59 +190,74 @@ export async function POST(request) {
       return NextResponse.json(
         {
           subCategoriesCreated: 0,
-          errors,
+          errors: errors.length > 0 ? errors : undefined,
           message: "No valid subcategory data found. Please check your Excel file.",
         },
         { status: 400 }
       );
     }
 
-    // Process subcategories - skip duplicates by name+categoryId combination
+    // Process subcategories in batches using createMany for better performance
     let subCategoriesCreated = 0;
     const dbErrors = [];
 
     // Use Prisma transaction for data consistency
     await prisma.$transaction(
       async (tx) => {
-        for (const rowData of validatedRows) {
+        // Process in batches to avoid memory issues and improve performance
+        for (let i = 0; i < validatedRows.length; i += BATCH_SIZE) {
+          const batch = validatedRows.slice(i, i + BATCH_SIZE);
+
           try {
-            // Check if subcategory already exists
-            const existingSubCategory = await tx.subCategory.findFirst({
-              where: {
-                name: rowData.name,
-                categoryId: rowData.categoryId,
-                userId: session.user.id,
-              },
+            // Prepare data for createMany (remove _rowNumber)
+            const dataToInsert = batch.map((row) => ({
+              name: row.name,
+              icon: row.icon,
+              color: row.color,
+              categoryId: row.categoryId,
+              userId: row.userId,
+            }));
+
+            // Use createMany for batch insert (much faster than individual creates)
+            const result = await tx.subCategory.createMany({
+              data: dataToInsert,
+              skipDuplicates: true, // Skip duplicates at database level as well
             });
 
-            // Skip if already exists
-            if (existingSubCategory) {
-              continue;
+            subCategoriesCreated += result.count;
+
+            // Update the existing keys set to track what we've inserted
+            batch.forEach((row) => {
+              existingSubCategoryKeys.add(`${row.name}|${row.categoryId}`);
+            });
+          } catch (batchError) {
+            // If batch insert fails, try individual inserts for this batch
+            console.error(`Batch insert failed, trying individual inserts:`, batchError);
+            for (const rowData of batch) {
+              try {
+                await tx.subCategory.create({
+                  data: {
+                    name: rowData.name,
+                    icon: rowData.icon,
+                    color: rowData.color,
+                    categoryId: rowData.categoryId,
+                    userId: rowData.userId,
+                  },
+                });
+                subCategoriesCreated++;
+              } catch (subError) {
+                dbErrors.push({
+                  row: rowData._rowNumber,
+                  error: `Failed to create subcategory "${rowData.name}": ${subError.message}`,
+                  data: rowData,
+                });
+              }
             }
-
-            // Create subcategory
-            await tx.subCategory.create({
-              data: {
-                name: rowData.name,
-                icon: rowData.icon || null,
-                color: rowData.color || null,
-                categoryId: rowData.categoryId,
-                userId: session.user.id,
-              },
-            });
-
-            subCategoriesCreated++;
-          } catch (subError) {
-            dbErrors.push({
-              row: rowData._rowNumber,
-              error: `Failed to create subcategory "${rowData.name}": ${subError.message}`,
-              data: rowData,
-            });
           }
         }
       },
       {
-        timeout: 30000, // 30 second timeout for large files
+        timeout: TRANSACTION_TIMEOUT, // Increased timeout for large files
       }
     );
 
@@ -260,4 +306,3 @@ export async function POST(request) {
     );
   }
 }
-

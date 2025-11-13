@@ -188,6 +188,23 @@ import prisma from "@/db/db.config";
 - Use consistent component props and variants
 - Follow shadcn/ui patterns for customization
 
+#### Select Component Rules
+
+- **CRITICAL**: Never use empty string (`""`) as a value prop for `<SelectItem />` components
+- The Select component uses empty string internally to clear selection and show placeholder
+- If you need an "empty" or "none" option, use a meaningful value like `"none"` or `"all"` instead
+- Always filter out items with empty string IDs/values before passing to Select components
+- Example of correct pattern:
+
+```javascript
+// Filter out empty values before using in Select
+const validItems = items.filter((item) => item.id && item.id !== "");
+
+// Use meaningful values, not empty strings
+<SelectItem value="none">None</SelectItem>  // ✅ Correct
+<SelectItem value="">None</SelectItem>      // ❌ Wrong - causes error
+```
+
 ## Routing Patterns
 
 ### Dynamic Routes

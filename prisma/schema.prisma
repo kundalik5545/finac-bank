@@ -63,12 +63,24 @@ enum PaymentMethod {
   OTHER
 }
 
+enum AlertType {
+  WARNING
+  EXCEEDED
+}
+
+enum AlertChannel {
+  EMAIL
+  TELEGRAM
+  BOTH
+}
+
 model Category {
   id        String       @id @default(uuid())
   name      String
   type      CategoryType
   color     String?
   icon      String?
+  position  Int?
   user      User?        @relation(fields: [userId], references: [id])
   userId    String?
   createdAt DateTime     @default(now())
@@ -80,6 +92,7 @@ model Category {
   recurringTransactions RecurringTransaction[]
 
   @@index([userId])
+  @@index([userId, position])
 }
 
 model SubCategory {
@@ -117,8 +130,9 @@ model BankAccount {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  transactions    Transaction[]
-  accountBalances AccountBalance[]
+  transactions          Transaction[]
+  accountBalances       AccountBalance[]
+  recurringTransactions RecurringTransaction[]
 
   @@index([userId])
 }
@@ -180,12 +194,16 @@ model AccountBalance {
 }
 
 model Budget {
-  id               String  @id @default(uuid())
-  amount           Decimal @db.Decimal(65, 4)
+  id               String       @id @default(uuid())
+  amount           Decimal      @db.Decimal(65, 4)
   month            Int? // numeric month (1-12) or use startDate/endDate
+  year             Int?
   description      String?
-  totalDeposits    Decimal @default(0.0) @db.Decimal(65, 4)
-  totalWithdrawals Decimal @default(0.0) @db.Decimal(65, 4)
+  totalDeposits    Decimal      @default(0.0) @db.Decimal(65, 4)
+  totalWithdrawals Decimal      @default(0.0) @db.Decimal(65, 4)
+  alertThreshold   Int          @default(80)
+  lastAlertSent    DateTime?
+  isActive         Boolean      @default(true)
 
   user       User      @relation(fields: [userId], references: [id])
   userId     String
@@ -195,8 +213,10 @@ model Budget {
   updatedAt  DateTime  @updatedAt
 
   transactions Transaction[]
+  alerts       BudgetAlert[]
 
   @@index([userId, categoryId])
+  @@index([userId, month, year])
 }
 
 model RecurringTransaction {
@@ -210,6 +230,8 @@ model RecurringTransaction {
   lastProcessed DateTime?
   user          User               @relation(fields: [userId], references: [id])
   userId        String
+  bankAccount   BankAccount        @relation(fields: [bankAccountId], references: [id])
+  bankAccountId String
   category      Category?          @relation(fields: [categoryId], references: [id])
   categoryId    String?
   isActive      Boolean            @default(true)
@@ -221,19 +243,34 @@ model RecurringTransaction {
   @@index([userId, frequency])
 }
 
+model BudgetAlert {
+  id        String      @id @default(uuid())
+  budget    Budget      @relation(fields: [budgetId], references: [id])
+  budgetId  String
+  alertType AlertType
+  channel   AlertChannel
+  sentAt    DateTime    @default(now())
+  createdAt DateTime    @default(now())
+
+  @@index([budgetId, sentAt])
+}
+
 model UserPreference {
-  id                 String   @id @default(uuid())
-  user               User     @relation(fields: [userId], references: [id])
-  userId             String   @unique
-  currency           Currency @default(INR)
-  dateFormat         String? // e.g., "DD/MM/YYYY"
-  theme              String? // "light" | "dark" | custom
-  defaultAccountId   String? // optional FK to Account (not enforced) - stored as id
-  defaultCategoryId  String? // optional FK to Category
-  emailNotifications Boolean  @default(true)
-  budgetAlerts       Boolean  @default(true)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                   String   @id @default(uuid())
+  user                 User     @relation(fields: [userId], references: [id])
+  userId               String   @unique
+  currency             Currency @default(INR)
+  dateFormat           String? // e.g., "DD/MM/YYYY"
+  theme                String? // "light" | "dark" | custom
+  defaultAccountId     String? // optional FK to Account (not enforced) - stored as id
+  defaultCategoryId    String? // optional FK to Category
+  emailNotifications   Boolean  @default(true)
+  budgetAlerts         Boolean  @default(true)
+  telegramChatId       String?
+  telegramNotifications Boolean  @default(false)
+  budgetAlertThreshold Int      @default(80)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   @@index([userId])
 }

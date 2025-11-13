@@ -115,6 +115,7 @@ export default function TransactionsClient({ initialBankAccounts, initialCategor
           page={page}
           limit={limit}
           onPageChange={handlePageChange}
+          onRefresh={fetchTransactions}
         />
       )}
     </div>

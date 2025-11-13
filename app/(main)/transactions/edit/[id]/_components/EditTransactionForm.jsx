@@ -89,6 +89,7 @@ export default function EditTransactionForm({ transaction, bankAccounts, categor
 
       if (response.ok) {
         toast.success("Transaction updated successfully");
+        router.refresh(); // Refresh to update dashboard and other pages
         router.push(`/transactions/details/${transaction.id}`);
       } else {
         const error = await response.json();

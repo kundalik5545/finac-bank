@@ -18,7 +18,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 
-export function TransactionTable({ transactions, total, page, limit, onPageChange }) {
+export function TransactionTable({ transactions, total, page, limit, onPageChange, onRefresh }) {
   const { formatCurrency } = useFormatCurrency("en-IN", "INR");
   const isMobile = useIsMobile();
   const router = useRouter();
@@ -89,7 +89,10 @@ export function TransactionTable({ transactions, total, page, limit, onPageChang
 
       if (response.ok) {
         toast.success("Transaction deleted successfully");
-        router.refresh();
+        router.refresh(); // Refresh server components
+        if (onRefresh) {
+          onRefresh(); // Refresh client data
+        }
       } else {
         const error = await response.json();
         toast.error(error.error || "Failed to delete transaction");

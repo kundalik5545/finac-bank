@@ -174,6 +174,21 @@ export async function POST(request) {
     const createdCategories = [];
     const dbErrors = [];
 
+    // Get the maximum position for this user's categories before bulk create
+    const maxPositionCategory = await prisma.category.findFirst({
+      where: {
+        userId: session.user.id,
+      },
+      orderBy: {
+        position: "desc",
+      },
+      select: {
+        position: true,
+      },
+    });
+
+    let nextPosition = maxPositionCategory?.position ? maxPositionCategory.position + 1 : 1;
+
     // Use Prisma transaction for data consistency
     await prisma.$transaction(
       async (tx) => {
@@ -193,7 +208,7 @@ export async function POST(request) {
               continue;
             }
 
-            // Create category
+            // Create category with position
             const category = await tx.category.create({
               data: {
                 name: rowData.name,
@@ -201,6 +216,7 @@ export async function POST(request) {
                 icon: rowData.icon || null,
                 color: rowData.color || null,
                 userId: session.user.id,
+                position: nextPosition++,
               },
             });
 

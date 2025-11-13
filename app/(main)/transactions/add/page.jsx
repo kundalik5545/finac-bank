@@ -100,6 +100,7 @@ export default function AddTransactionPage() {
 
       if (response.ok) {
         toast.success("Transaction created successfully");
+        router.refresh(); // Refresh to update dashboard and other pages
         router.push("/transactions");
       } else {
         const error = await response.json();

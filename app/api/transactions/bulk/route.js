@@ -1,15 +1,16 @@
 /**
  * Bulk Transaction Upload API
- * 
+ *
  * This endpoint handles bulk upload of transactions from Excel files.
  * It parses the Excel file, validates each row, and creates transactions in the database.
- * 
+ * OPTIMIZED: Uses batch operations for better performance.
+ *
  * POST /api/transactions/bulk
- * 
+ *
  * Request: multipart/form-data
  * - file: Excel file (.xlsx, .xls)
  * - bankAccountId (optional): Default bank account ID if not provided in Excel
- * 
+ *
  * Response: { success: number, failed: number, errors: array }
  */
 
@@ -22,6 +23,10 @@ import { parseExcelToJSON, parseDate, parseNumber, parseBoolean } from "@/lib/ex
 
 // Maximum file size: 5MB
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+// Batch size for processing (process in chunks to avoid memory issues)
+const BATCH_SIZE = 100;
+// Increased timeout for large files
+const TRANSACTION_TIMEOUT = 120000; // 2 minutes
 
 export async function POST(request) {
   try {
@@ -103,7 +108,7 @@ export async function POST(request) {
       );
     }
 
-    // Get user's bank accounts for validation
+    // Get user's bank accounts for validation (single query)
     const userBankAccounts = await prisma.bankAccount.findMany({
       where: {
         userId: session.user.id,
@@ -115,12 +120,14 @@ export async function POST(request) {
       },
     });
 
-    const bankAccountIds = userBankAccounts.map((acc) => acc.id);
+    const bankAccountIds = new Set(userBankAccounts.map((acc) => acc.id));
+    const bankAccountMap = new Map(
+      userBankAccounts.map((acc) => [acc.name.toLowerCase(), acc.id])
+    );
 
     // Process each row and validate
     const transactions = [];
     const errors = [];
-    let successCount = 0;
     let failedCount = 0;
 
     for (let i = 0; i < parsedData.length; i++) {
@@ -133,20 +140,20 @@ export async function POST(request) {
 
         // If still no bankAccountId, try to find by name
         if (!bankAccountId && row["Bank Account Name"]) {
-          const account = userBankAccounts.find(
-            (acc) => acc.name.toLowerCase() === row["Bank Account Name"].toLowerCase()
-          );
-          if (account) {
-            bankAccountId = account.id;
+          const accountId = bankAccountMap.get(row["Bank Account Name"].toLowerCase());
+          if (accountId) {
+            bankAccountId = accountId;
           }
         }
 
         // Validate bankAccountId exists and belongs to user
         if (!bankAccountId) {
-          throw new Error("Bank account is required. Please provide bankAccountId in Excel or select one in the form.");
+          throw new Error(
+            "Bank account is required. Please provide bankAccountId in Excel or select one in the form."
+          );
         }
 
-        if (!bankAccountIds.includes(bankAccountId)) {
+        if (!bankAccountIds.has(bankAccountId)) {
           throw new Error(`Bank account with ID ${bankAccountId} not found or access denied`);
         }
 
@@ -184,7 +191,10 @@ export async function POST(request) {
         // Add userId for database insertion
         validatedData.userId = session.user.id;
 
-        transactions.push(validatedData);
+        transactions.push({
+          ...validatedData,
+          _rowNumber: rowNumber,
+        });
       } catch (error) {
         failedCount++;
         errors.push({
@@ -208,46 +218,57 @@ export async function POST(request) {
       );
     }
 
-    // Insert transactions in database using transaction for atomicity
+    // Insert transactions in batches using createMany for better performance
     let insertedCount = 0;
     const dbErrors = [];
 
-    try {
-      // Use Prisma transaction to ensure all-or-nothing if needed
-      // For bulk insert, we'll do individual creates to track errors per row
-      for (const transaction of transactions) {
-        try {
-          await prisma.transaction.create({
-            data: transaction,
-          });
-          insertedCount++;
-        } catch (dbError) {
-          // Find the original row number for this transaction
-          const transactionIndex = transactions.indexOf(transaction);
-          const originalRow = parsedData[transactionIndex];
-          const rowNumber = transactionIndex + 2;
+    // Use Prisma transaction for data consistency
+    await prisma.$transaction(
+      async (tx) => {
+        // Process in batches to avoid memory issues and improve performance
+        for (let i = 0; i < transactions.length; i += BATCH_SIZE) {
+          const batch = transactions.slice(i, i + BATCH_SIZE);
 
-          dbErrors.push({
-            row: rowNumber,
-            error: dbError.message || "Database error",
-            data: originalRow,
-          });
-          failedCount++;
+          try {
+            // Prepare data for createMany (remove _rowNumber)
+            const dataToInsert = batch.map((txn) => {
+              const { _rowNumber, ...data } = txn;
+              return data;
+            });
+
+            // Use createMany for batch insert (much faster than individual creates)
+            const result = await tx.transaction.createMany({
+              data: dataToInsert,
+              skipDuplicates: false, // We want to know about duplicates
+            });
+
+            insertedCount += result.count;
+          } catch (batchError) {
+            // If batch insert fails, try individual inserts for this batch
+            console.error(`Batch insert failed, trying individual inserts:`, batchError);
+            for (const transaction of batch) {
+              try {
+                const { _rowNumber, ...data } = transaction;
+                await tx.transaction.create({
+                  data,
+                });
+                insertedCount++;
+              } catch (dbError) {
+                dbErrors.push({
+                  row: transaction._rowNumber,
+                  error: dbError.message || "Database error",
+                  data: parsedData[transaction._rowNumber - 2], // Get original row data
+                });
+                failedCount++;
+              }
+            }
+          }
         }
+      },
+      {
+        timeout: TRANSACTION_TIMEOUT, // Increased timeout for large files
       }
-    } catch (error) {
-      console.error("Error inserting transactions:", error);
-      return NextResponse.json(
-        {
-          error: "Failed to insert transactions",
-          details: error.message,
-          success: insertedCount,
-          failed: failedCount,
-          errors: [...errors, ...dbErrors],
-        },
-        { status: 500 }
-      );
-    }
+    );
 
     // Return summary
     return NextResponse.json(
@@ -276,6 +297,16 @@ export async function POST(request) {
       );
     }
 
+    // Handle Prisma transaction timeout
+    if (error.code === "P2025" || error.message?.includes("timeout")) {
+      return NextResponse.json(
+        {
+          error: "Operation timed out. Please try with a smaller file or contact support.",
+        },
+        { status: 408 }
+      );
+    }
+
     return NextResponse.json(
       {
         error: "Failed to process bulk upload",
@@ -285,4 +316,3 @@ export async function POST(request) {
     );
   }
 }
-

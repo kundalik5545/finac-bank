@@ -25,9 +25,14 @@ const CategoriesPage = async () => {
             },
           },
         },
-        orderBy: {
-          name: "asc",
-        },
+        orderBy: [
+          {
+            position: "asc",
+          },
+          {
+            name: "asc",
+          },
+        ],
       });
     }
   } catch (error) {
@@ -43,7 +48,8 @@ const CategoriesPage = async () => {
             Categories
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage your transaction categories and subcategories
+            Manage your transaction categories and subcategories. Drage and drop
+            to reorder.
           </p>
         </div>
         <Button className="flex">
