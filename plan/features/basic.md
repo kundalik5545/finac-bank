@@ -4,16 +4,26 @@ Corrected sentence:
 
 Nice — great stack. Below is a compact, developer-friendly plan you can use to scope an MVP and then iterate. I include feature priorities, suggested Prisma models, API/page structure, UI components, auth/infra notes, and a 4-sprint roadmap.
 
+# Todo
+
+1. Bank Accounts
+2. Transactions
+3. Reports
+4. Dashboards
+5. Upload transactions
+6. Category and sub-category
+7.
+
 # 1 — MVP (must-have)
 
 Focus on these first so you ship something useful quickly.
 
-- User auth (sign up / sign in / email verification)
-- Add / edit / delete accounts (bank, cash, credit card)
-- Add / edit / delete transactions (amount, date, account, category, merchant, note)
+- User auth (sign up / sign in / email verification) ✅
+- Add / edit / delete accounts (bank, cash, credit card) ✅
+- Add / edit / delete transactions (amount, date, account, category, merchant, note) ✅
 - Categories & tags (to organize transactions)
 - Simple dashboard with balance per account and recent transactions
-- CSV import/export of transactions
+- CSV import/export of transactions ✅
 - Basic reports: monthly income vs expense, category breakdown (pie)
 - Responsive UI using shadcn + Tailwind
 - Prisma + Postgres data persistence

@@ -4,28 +4,28 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { websiteDetails } from "@/data/website";
 import {
+  ArrowUpDown,
+  BanknoteIcon,
+  Calendar,
   DollarSign,
+  Download,
   LayoutDashboard,
   List,
-  CirclePlus,
-  ArrowUpDown,
-  Download,
-  Upload,
-  Settings,
   Search,
-  Calendar,
+  Settings,
+  Tags,
+  Upload,
 } from "lucide-react";
 import Link from "next/link";
-import { NavUser } from "./NavUser";
 import { NavMain } from "./NavMain";
-import { websiteDetails } from "@/data/website";
+import { NavUser } from "./NavUser";
 
 export function AppSidebar() {
   const data = {
@@ -46,9 +46,14 @@ export function AppSidebar() {
         icon: ArrowUpDown,
       },
       {
-        title: "Add Bank",
+        title: "Bank Accounts",
         url: "/bank-account",
-        icon: CirclePlus,
+        icon: BanknoteIcon,
+      },
+      {
+        title: "Categories",
+        url: "/categories",
+        icon: Tags,
       },
       {
         title: "To Do List",
@@ -56,7 +61,7 @@ export function AppSidebar() {
         icon: List,
       },
       {
-        title: "Upload Bulk Trans",
+        title: "Bulk Upload",
         url: "/bulk-upload",
         icon: Upload,
       },

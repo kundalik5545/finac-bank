@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -26,48 +25,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
-import { transactionSchema } from "@/lib/formSchema";
+import { updateTransactionSchema } from "@/lib/formSchema";
 
-export default function AddTransactionPage() {
+export default function EditTransactionForm({ transaction, bankAccounts, categories }) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [bankAccounts, setBankAccounts] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
-  const [activeAccountId, setActiveAccountId] = useState(null);
 
   const form = useForm({
-    resolver: zodResolver(transactionSchema),
+    resolver: zodResolver(updateTransactionSchema),
     defaultValues: {
-      amount: 0,
-      currency: "INR",
-      type: "EXPENSE",
-      status: "PENDING",
-      date: new Date().toISOString().split("T")[0],
-      isActive: true,
+      amount: Number(transaction.amount),
+      currency: transaction.currency,
+      type: transaction.type,
+      status: transaction.status,
+      date: new Date(transaction.date).toISOString().split("T")[0],
+      description: transaction.description || "",
+      comments: transaction.comments || "",
+      isActive: transaction.isActive,
+      bankAccountId: transaction.bankAccountId,
+      categoryId: transaction.categoryId || "",
+      subCategoryId: transaction.subCategoryId || "",
+      paymentMethod: transaction.paymentMethod || "",
     },
   });
-
-  useEffect(() => {
-    // Fetch bank accounts and categories
-    Promise.all([
-      fetch("/api/bank-accounts").then((res) => res.json()),
-      fetch("/api/categories")
-        .then((res) => res.json())
-        .catch(() => ({ categories: [] })),
-    ]).then(([bankData, categoryData]) => {
-      if (bankData.accounts) {
-        setBankAccounts(bankData.accounts.filter((acc) => acc.isActive));
-        if (bankData.activeAccountId) {
-          setActiveAccountId(bankData.activeAccountId);
-          form.setValue("bankAccountId", bankData.activeAccountId);
-        }
-      }
-      if (categoryData.categories) {
-        setCategories(categoryData.categories);
-      }
-    });
-  }, [form]);
 
   // Fetch sub-categories when category changes
   const selectedCategoryId = form.watch("categoryId");
@@ -83,27 +64,35 @@ export default function AddTransactionPage() {
         .catch(() => setSubCategories([]));
     } else {
       setSubCategories([]);
-      form.setValue("subCategoryId", undefined);
+      form.setValue("subCategoryId", "");
     }
   }, [selectedCategoryId, form]);
 
   async function onSubmit(values) {
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/transactions", {
-        method: "POST",
+      // Convert empty strings to null for optional fields
+      const submitData = {
+        ...values,
+        categoryId: values.categoryId || null,
+        subCategoryId: values.subCategoryId || null,
+        paymentMethod: values.paymentMethod || null,
+      };
+
+      const response = await fetch(`/api/transactions/${transaction.id}`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify(submitData),
       });
 
       if (response.ok) {
-        toast.success("Transaction created successfully");
-        router.push("/transactions");
+        toast.success("Transaction updated successfully");
+        router.push(`/transactions/details/${transaction.id}`);
       } else {
         const error = await response.json();
-        toast.error(error.error || "Failed to create transaction");
+        toast.error(error.error || "Failed to update transaction");
       }
     } catch (error) {
       console.error("Form submission error", error);
@@ -114,16 +103,16 @@ export default function AddTransactionPage() {
   }
 
   return (
-    <div className="add-transaction container mx-auto max-w-5xl flex justify-center items-center min-h-screen p-3">
+    <div className="edit-transaction container mx-auto max-w-5xl flex justify-center items-center min-h-screen p-3">
       <Card className="w-full shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold">
             <div className="flex items-center justify-between">
-              <span>Add Transaction</span>
+              <span>Edit Transaction</span>
               <X
                 size="24"
                 className="cursor-pointer"
-                onClick={() => router.push("/transactions")}
+                onClick={() => router.back()}
               />
             </div>
           </CardTitle>
@@ -144,9 +133,7 @@ export default function AddTransactionPage() {
                         step="0.01"
                         placeholder="0.00"
                         {...field}
-                        onChange={(e) =>
-                          field.onChange(parseFloat(e.target.value) || 0)
-                        }
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -162,10 +149,7 @@ export default function AddTransactionPage() {
                   render={({ field }) => (
                     <FormItem className="flex-1">
                       <FormLabel>Type *</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select type" />
@@ -189,10 +173,7 @@ export default function AddTransactionPage() {
                   render={({ field }) => (
                     <FormItem className="flex-1">
                       <FormLabel>Currency *</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select currency" />
@@ -214,10 +195,7 @@ export default function AddTransactionPage() {
                   render={({ field }) => (
                     <FormItem className="flex-1">
                       <FormLabel>Status *</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select status" />
@@ -257,10 +235,7 @@ export default function AddTransactionPage() {
                   render={({ field }) => (
                     <FormItem className="flex-1">
                       <FormLabel>Bank Account *</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select bank account" />
@@ -289,7 +264,7 @@ export default function AddTransactionPage() {
                     <FormItem className="flex-1">
                       <FormLabel>Category</FormLabel>
                       <Select
-                        onValueChange={(value) => field.onChange(value === "none" ? undefined : value)}
+                        onValueChange={(value) => field.onChange(value === "none" ? null : value)}
                         value={field.value || undefined}
                       >
                         <FormControl>
@@ -319,7 +294,7 @@ export default function AddTransactionPage() {
                       <FormItem className="flex-1">
                         <FormLabel>Sub-Category</FormLabel>
                         <Select
-                          onValueChange={(value) => field.onChange(value === "none" ? undefined : value)}
+                          onValueChange={(value) => field.onChange(value === "none" ? null : value)}
                           value={field.value || undefined}
                         >
                           <FormControl>
@@ -351,7 +326,7 @@ export default function AddTransactionPage() {
                   <FormItem>
                     <FormLabel>Payment Method</FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(value === "none" ? undefined : value)}
+                      onValueChange={(value) => field.onChange(value === "none" ? null : value)}
                       value={field.value || undefined}
                     >
                       <FormControl>
@@ -381,10 +356,7 @@ export default function AddTransactionPage() {
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Transaction description (optional)"
-                        {...field}
-                      />
+                      <Input placeholder="Transaction description (optional)" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -419,7 +391,7 @@ export default function AddTransactionPage() {
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Creating..." : "Add Transaction"}
+                  {isSubmitting ? "Updating..." : "Update Transaction"}
                 </Button>
               </div>
             </form>
@@ -429,3 +401,4 @@ export default function AddTransactionPage() {
     </div>
   );
 }
+

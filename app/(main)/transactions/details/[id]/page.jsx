@@ -1,15 +1,48 @@
-"use client";
-import { useParams } from "next/navigation";
-import React from "react";
+import { notFound } from "next/navigation";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import prisma from "@/db/db.config";
+import TransactionDetailsClient from "./_components/TransactionDetailsClient";
 
-const TransDetails = () => {
-  const { id } = useParams();
-  return (
-    <div>
-      <h1>Transaction Details</h1>
-      <p>ID: {id}</p>
-    </div>
-  );
-};
+export default async function TransactionDetailsPage({ params }) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const { id } = await params;
 
-export default TransDetails;
+  if (!session?.user) {
+    notFound();
+  }
+
+  const transaction = await prisma.transaction.findFirst({
+    where: {
+      id,
+      userId: session.user.id,
+    },
+    include: {
+      bankAccount: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+        },
+      },
+      category: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      subCategory: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  });
+
+  if (!transaction) {
+    notFound();
+  }
+
+  return <TransactionDetailsClient transaction={transaction} />;
+}
