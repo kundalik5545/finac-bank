@@ -23,6 +23,9 @@ import {
   Tags,
   Upload,
   Wallet,
+  TrendingUp,
+  Target,
+  Building2,
 } from "lucide-react";
 import Link from "next/link";
 import { NavMain } from "./NavMain";
@@ -86,6 +89,26 @@ export function AppSidebar() {
         icon: Calendar,
       },
       {
+        title: "Investments",
+        url: "/investments",
+        icon: TrendingUp,
+      },
+      {
+        title: "Investment Analytics",
+        url: "/investments/analytics",
+        icon: TrendingUp,
+      },
+      {
+        title: "Goals",
+        url: "/investments/goals",
+        icon: Target,
+      },
+      {
+        title: "Assets",
+        url: "/assets",
+        icon: Building2,
+      },
+      {
         title: "To Do List",
         url: "/todo",
         icon: List,
@@ -146,9 +169,7 @@ export function AppSidebar() {
       <SidebarContent>
         <NavMain items={data.navMain} navQuick={navQuick} />
       </SidebarContent>
-      <SidebarFooter>
-        {user && <NavUser user={user} />}
-      </SidebarFooter>
+      <SidebarFooter>{user && <NavUser user={user} />}</SidebarFooter>
     </Sidebar>
   );
 }

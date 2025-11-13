@@ -24,6 +24,7 @@ model Category {
   recurringTransactions RecurringTransaction[]
   subCategories         SubCategory[]
   transactions          Transaction[]
+  investments           Investment[]
 
   @@index([userId])
   @@index([userId, position])
@@ -41,6 +42,7 @@ model SubCategory {
   category     Category      @relation(fields: [categoryId], references: [id])
   user         User?         @relation(fields: [userId], references: [id])
   transactions Transaction[]
+  investments  Investment[]
 
   @@index([categoryId, userId])
 }
@@ -213,6 +215,9 @@ model User {
   userPreferences UserPreference?
   accounts        Account[]
   sessions        Session[]
+  investments     Investment[]
+  goals           Goal[]
+  assets          Asset[]
 
   @@map("user")
 }
@@ -322,4 +327,81 @@ enum AlertChannel {
   EMAIL
   TELEGRAM
   BOTH
+}
+
+model Investment {
+  id            String        @id @default(uuid())
+  name          String
+  type          InvestmentType
+  symbol        String?
+  quantity      Decimal        @db.Decimal(65, 4)
+  purchasePrice Decimal        @db.Decimal(65, 4)
+  currentPrice  Decimal?       @db.Decimal(65, 4)
+  purchaseDate  DateTime
+  userId        String
+  categoryId    String?
+  subCategoryId String?
+  description   String?
+  notes         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  user          User           @relation(fields: [userId], references: [id])
+  category      Category?      @relation(fields: [categoryId], references: [id])
+  subCategory   SubCategory?   @relation(fields: [subCategoryId], references: [id])
+
+  @@index([userId, type])
+  @@index([userId, categoryId])
+}
+
+model Goal {
+  id          String    @id @default(uuid())
+  name        String
+  targetAmount Decimal   @db.Decimal(65, 4)
+  targetDate  DateTime
+  userId      String
+  description String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@index([userId, isActive])
+}
+
+model Asset {
+  id           String     @id @default(uuid())
+  name         String
+  type         AssetType
+  currentValue Decimal    @db.Decimal(65, 4)
+  purchaseValue Decimal   @db.Decimal(65, 4)
+  purchaseDate DateTime
+  userId       String
+  description  String?
+  notes        String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  user         User       @relation(fields: [userId], references: [id])
+
+  @@index([userId, type])
+}
+
+enum InvestmentType {
+  STOCKS
+  BONDS
+  FIXED_DEPOSIT
+  NPS
+  PF
+  GOLD
+  MUTUAL_FUNDS
+  CRYPTO
+  REAL_ESTATE
+  OTHER
+}
+
+enum AssetType {
+  PROPERTY
+  VEHICLE
+  JEWELRY
+  ELECTRONICS
+  OTHER
 }
