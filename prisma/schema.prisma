@@ -1,4 +1,7 @@
-// schema.prisma
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
 
 datasource db {
   provider  = "postgresql"
@@ -6,9 +9,256 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-  output   = "../lib/generated/prisma"
+model Category {
+  id                    String                 @id @default(uuid())
+  name                  String
+  type                  CategoryType
+  color                 String?
+  icon                  String?
+  userId                String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  position              Int?
+  budgets               Budget[]
+  user                  User?                  @relation(fields: [userId], references: [id])
+  recurringTransactions RecurringTransaction[]
+  subCategories         SubCategory[]
+  transactions          Transaction[]
+
+  @@index([userId])
+  @@index([userId, position])
+}
+
+model SubCategory {
+  id           String        @id @default(uuid())
+  name         String
+  color        String?
+  icon         String?
+  userId       String?
+  categoryId   String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  category     Category      @relation(fields: [categoryId], references: [id])
+  user         User?         @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+
+  @@index([categoryId, userId])
+}
+
+model BankAccount {
+  id                    String                 @id @default(uuid())
+  name                  String
+  type                  AccountType
+  currency              Currency
+  isActive              Boolean                @default(true)
+  balance               Decimal                @default(0.0) @db.Decimal(65, 4)
+  ifscCode              String?
+  branch                String?
+  bankId                String?
+  bankAccount           String?
+  isPrimary             Boolean                @default(false)
+  userId                String
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  accountBalances       AccountBalance[]
+  user                  User                   @relation(fields: [userId], references: [id])
+  recurringTransactions RecurringTransaction[]
+  transactions          Transaction[]
+
+  @@index([userId])
+}
+
+model Transaction {
+  id                     String                @id @default(uuid())
+  amount                 Decimal               @db.Decimal(65, 4)
+  currency               Currency
+  type                   TransactionType
+  status                 TransactionStatus     @default(PENDING)
+  date                   DateTime
+  description            String?
+  comments               String?
+  isActive               Boolean               @default(true)
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  userId                 String
+  bankAccountId          String
+  categoryId             String?
+  subCategoryId          String?
+  recurringTransactionId String?
+  paymentMethod          PaymentMethod?
+  externalId             String?
+  budgetId               String?
+  bankAccount            BankAccount           @relation(fields: [bankAccountId], references: [id])
+  budget                 Budget?               @relation(fields: [budgetId], references: [id])
+  category               Category?             @relation(fields: [categoryId], references: [id])
+  recurringTransaction   RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id])
+  subCategory            SubCategory?          @relation(fields: [subCategoryId], references: [id])
+  user                   User                  @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([bankAccountId])
+  @@index([categoryId])
+  @@index([date])
+}
+
+model AccountBalance {
+  id              String      @id @default(uuid())
+  bankAccountId   String
+  date            DateTime
+  totalDeposit    Decimal     @default(0.0) @db.Decimal(65, 4)
+  totalWithdrawal Decimal     @default(0.0) @db.Decimal(65, 4)
+  currentBalance  Decimal     @db.Decimal(65, 4)
+  bankId          String?
+  bankAccounts    String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  bankAccount     BankAccount @relation(fields: [bankAccountId], references: [id])
+
+  @@index([bankAccountId, date])
+}
+
+model Budget {
+  id               String        @id @default(uuid())
+  amount           Decimal       @db.Decimal(65, 4)
+  month            Int?
+  description      String?
+  totalDeposits    Decimal       @default(0.0) @db.Decimal(65, 4)
+  totalWithdrawals Decimal       @default(0.0) @db.Decimal(65, 4)
+  userId           String
+  categoryId       String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  alertThreshold   Int           @default(80)
+  isActive         Boolean       @default(true)
+  lastAlertSent    DateTime?
+  year             Int?
+  category         Category?     @relation(fields: [categoryId], references: [id])
+  user             User          @relation(fields: [userId], references: [id])
+  alerts           BudgetAlert[]
+  transactions     Transaction[]
+
+  @@index([userId, categoryId])
+  @@index([userId, month, year])
+}
+
+model RecurringTransaction {
+  id            String             @id @default(uuid())
+  amount        Decimal            @db.Decimal(65, 4)
+  frequency     RecurringFrequency
+  description   String?
+  startDate     DateTime
+  endDate       DateTime?
+  status        TransactionStatus  @default(PENDING)
+  lastProcessed DateTime?
+  userId        String
+  categoryId    String?
+  isActive      Boolean            @default(true)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  bankAccountId String
+  bankAccount   BankAccount        @relation(fields: [bankAccountId], references: [id])
+  category      Category?          @relation(fields: [categoryId], references: [id])
+  user          User               @relation(fields: [userId], references: [id])
+  transactions  Transaction[]
+
+  @@index([userId, frequency])
+}
+
+model BudgetAlert {
+  id        String       @id @default(uuid())
+  budgetId  String
+  alertType AlertType
+  channel   AlertChannel
+  sentAt    DateTime     @default(now())
+  createdAt DateTime     @default(now())
+  budget    Budget       @relation(fields: [budgetId], references: [id])
+
+  @@index([budgetId, sentAt])
+}
+
+model UserPreference {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  currency              Currency @default(INR)
+  dateFormat            String?
+  theme                 String?
+  defaultAccountId      String?
+  defaultCategoryId     String?
+  emailNotifications    Boolean  @default(true)
+  budgetAlerts          Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  budgetAlertThreshold  Int      @default(80)
+  telegramChatId        String?
+  telegramNotifications Boolean  @default(false)
+  user                  User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model User {
+  id              String                 @id
+  name            String
+  email           String                 @unique
+  emailVerified   Boolean                @default(false)
+  image           String?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @default(now()) @updatedAt
+  bankAccounts    BankAccount[]
+  budgets         Budget[]
+  categories      Category[]
+  recurringTrans  RecurringTransaction[]
+  subCategories   SubCategory[]
+  transactions    Transaction[]
+  userPreferences UserPreference?
+  accounts        Account[]
+  sessions        Session[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@map("verification")
 }
 
 enum AccountType {
@@ -72,272 +322,4 @@ enum AlertChannel {
   EMAIL
   TELEGRAM
   BOTH
-}
-
-model Category {
-  id        String       @id @default(uuid())
-  name      String
-  type      CategoryType
-  color     String?
-  icon      String?
-  position  Int?
-  user      User?        @relation(fields: [userId], references: [id])
-  userId    String?
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-
-  subCategories         SubCategory[]
-  transactions          Transaction[]
-  budgets               Budget[]
-  recurringTransactions RecurringTransaction[]
-
-  @@index([userId])
-  @@index([userId, position])
-}
-
-model SubCategory {
-  id         String   @id @default(uuid())
-  name       String
-  color      String?
-  icon       String?
-  user       User?    @relation(fields: [userId], references: [id])
-  userId     String?
-  category   Category @relation(fields: [categoryId], references: [id])
-  categoryId String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  transactions Transaction[]
-
-  @@index([categoryId, userId])
-}
-
-model BankAccount {
-  id          String      @id @default(uuid())
-  name        String
-  type        AccountType
-  currency    Currency
-  isActive    Boolean     @default(true)
-  balance     Decimal     @default(0.0) @db.Decimal(65, 4)
-  ifscCode    String?
-  branch      String?
-  bankId      String?
-  bankAccount String?
-  isPrimary   Boolean     @default(false)
-
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  transactions          Transaction[]
-  accountBalances       AccountBalance[]
-  recurringTransactions RecurringTransaction[]
-
-  @@index([userId])
-}
-
-model Transaction {
-  id          String            @id @default(uuid())
-  amount      Decimal           @db.Decimal(65, 4)
-  currency    Currency
-  type        TransactionType
-  status      TransactionStatus @default(PENDING)
-  date        DateTime
-  description String?
-  comments    String?
-  isActive    Boolean           @default(true)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-
-  user   User   @relation(fields: [userId], references: [id])
-  userId String
-
-  bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id])
-  bankAccountId String
-
-  category   Category? @relation(fields: [categoryId], references: [id])
-  categoryId String?
-
-  subCategory   SubCategory? @relation(fields: [subCategoryId], references: [id])
-  subCategoryId String?
-
-  recurringTransaction   RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id])
-  recurringTransactionId String?
-
-  paymentMethod PaymentMethod?
-  externalId    String? // for bank import linking
-
-  budget   Budget? @relation(fields: [budgetId], references: [id])
-  budgetId String?
-
-  @@index([userId])
-  @@index([bankAccountId])
-  @@index([categoryId])
-  @@index([date])
-}
-
-model AccountBalance {
-  id              String      @id @default(uuid())
-  bankAccount     BankAccount @relation(fields: [bankAccountId], references: [id])
-  bankAccountId   String
-  date            DateTime
-  totalDeposit    Decimal     @default(0.0) @db.Decimal(65, 4)
-  totalWithdrawal Decimal     @default(0.0) @db.Decimal(65, 4)
-  currentBalance  Decimal     @db.Decimal(65, 4)
-  bankId          String?
-  bankAccounts    String?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-
-  @@index([bankAccountId, date])
-}
-
-model Budget {
-  id               String       @id @default(uuid())
-  amount           Decimal      @db.Decimal(65, 4)
-  month            Int? // numeric month (1-12) or use startDate/endDate
-  year             Int?
-  description      String?
-  totalDeposits    Decimal      @default(0.0) @db.Decimal(65, 4)
-  totalWithdrawals Decimal      @default(0.0) @db.Decimal(65, 4)
-  alertThreshold   Int          @default(80)
-  lastAlertSent    DateTime?
-  isActive         Boolean      @default(true)
-
-  user       User      @relation(fields: [userId], references: [id])
-  userId     String
-  category   Category? @relation(fields: [categoryId], references: [id])
-  categoryId String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-
-  transactions Transaction[]
-  alerts       BudgetAlert[]
-
-  @@index([userId, categoryId])
-  @@index([userId, month, year])
-}
-
-model RecurringTransaction {
-  id            String             @id @default(uuid())
-  amount        Decimal            @db.Decimal(65, 4)
-  frequency     RecurringFrequency
-  description   String?
-  startDate     DateTime
-  endDate       DateTime?
-  status        TransactionStatus  @default(PENDING)
-  lastProcessed DateTime?
-  user          User               @relation(fields: [userId], references: [id])
-  userId        String
-  bankAccount   BankAccount        @relation(fields: [bankAccountId], references: [id])
-  bankAccountId String
-  category      Category?          @relation(fields: [categoryId], references: [id])
-  categoryId    String?
-  isActive      Boolean            @default(true)
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-
-  transactions Transaction[] // generated instances of recurring runs
-
-  @@index([userId, frequency])
-}
-
-model BudgetAlert {
-  id        String      @id @default(uuid())
-  budget    Budget      @relation(fields: [budgetId], references: [id])
-  budgetId  String
-  alertType AlertType
-  channel   AlertChannel
-  sentAt    DateTime    @default(now())
-  createdAt DateTime    @default(now())
-
-  @@index([budgetId, sentAt])
-}
-
-model UserPreference {
-  id                   String   @id @default(uuid())
-  user                 User     @relation(fields: [userId], references: [id])
-  userId               String   @unique
-  currency             Currency @default(INR)
-  dateFormat           String? // e.g., "DD/MM/YYYY"
-  theme                String? // "light" | "dark" | custom
-  defaultAccountId     String? // optional FK to Account (not enforced) - stored as id
-  defaultCategoryId    String? // optional FK to Category
-  emailNotifications   Boolean  @default(true)
-  budgetAlerts         Boolean  @default(true)
-  telegramChatId       String?
-  telegramNotifications Boolean  @default(false)
-  budgetAlertThreshold Int      @default(80)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-
-  @@index([userId])
-}
-
-model User {
-  id              String                 @id
-  name            String
-  email           String
-  emailVerified   Boolean                @default(false)
-  image           String?
-  createdAt       DateTime               @default(now())
-  updatedAt       DateTime               @default(now()) @updatedAt
-  sessions        Session[]
-  accounts        Account[]
-  bankAccounts    BankAccount[]
-  transactions    Transaction[]
-  categories      Category[]
-  subCategories   SubCategory[]
-  budgets         Budget[]
-  recurringTrans  RecurringTransaction[]
-  userPreferences UserPreference?
-
-  @@unique([email])
-  @@map("user")
-}
-
-model Session {
-  id        String   @id
-  expiresAt DateTime
-  token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([token])
-  @@map("session")
-}
-
-model Account {
-  id                    String    @id
-  accountId             String
-  providerId            String
-  userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-
-  @@map("account")
-}
-
-model Verification {
-  id         String   @id
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now()) @updatedAt
-
-  @@map("verification")
 }

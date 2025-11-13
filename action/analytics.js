@@ -92,16 +92,13 @@ export async function getMonthlySummary(userId) {
       where: {
         userId,
         month: now.getMonth() + 1, // 1-12
+        year: now.getFullYear(),
+        isActive: true,
       },
       include: {
-        transactions: {
-          where: {
-            status: "COMPLETED",
-            isActive: true,
-            date: {
-              gte: startOfMonth,
-              lte: endOfMonth,
-            },
+        category: {
+          select: {
+            id: true,
           },
         },
       },
@@ -109,17 +106,75 @@ export async function getMonthlySummary(userId) {
 
     let budgetUsed = 0;
     let totalBudget = 0;
+    
     if (budgets.length > 0) {
       totalBudget = budgets.reduce((sum, budget) => sum + Number(budget.amount), 0);
-      budgetUsed = budgets.reduce(
-        (sum, budget) =>
-          sum +
-          budget.transactions.reduce(
-            (txSum, tx) => txSum + Number(tx.amount),
-            0
-          ),
-        0
-      );
+      
+      // Collect all unique category IDs from budgets
+      const budgetCategoryIds = budgets
+        .map((b) => b.categoryId)
+        .filter((id) => id !== null);
+      
+      // Get all expense transactions for the current month that match budget categories
+      // or are directly linked to budgets
+      const budgetIds = budgets.map((b) => b.id);
+      
+      // Build OR conditions for transactions
+      const orConditions = [];
+      
+      // Add condition for transactions directly linked to budgets
+      if (budgetIds.length > 0) {
+        orConditions.push({
+          budgetId: {
+            in: budgetIds,
+          },
+        });
+      }
+      
+      // Add condition for transactions matching budget categories
+      if (budgetCategoryIds.length > 0) {
+        orConditions.push({
+          categoryId: {
+            in: budgetCategoryIds,
+          },
+        });
+      }
+      
+      // If no conditions, skip query
+      if (orConditions.length > 0) {
+        const budgetTransactions = await prisma.transaction.findMany({
+          where: {
+            userId,
+            type: "EXPENSE",
+            status: "COMPLETED",
+            isActive: true,
+            date: {
+              gte: startOfMonth,
+              lte: endOfMonth,
+            },
+            OR: orConditions,
+          },
+          select: {
+            id: true,
+            amount: true,
+            categoryId: true,
+            budgetId: true,
+          },
+        });
+
+        // Use a Set to track counted transaction IDs to avoid double-counting
+        const countedTransactionIds = new Set();
+        
+        // Calculate total budget used by summing all unique transactions
+        budgetUsed = budgetTransactions.reduce((sum, tx) => {
+          // Only count each transaction once
+          if (!countedTransactionIds.has(tx.id)) {
+            countedTransactionIds.add(tx.id);
+            return sum + Number(tx.amount);
+          }
+          return sum;
+        }, 0);
+      }
     }
 
     const expenseAmount = Number(totalExpense._sum.amount || 0);

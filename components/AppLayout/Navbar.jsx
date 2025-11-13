@@ -24,14 +24,41 @@ import { Separator } from "../ui/separator";
 import { SidebarTrigger } from "../ui/sidebar";
 import ModeToggle from "./ModeToggle";
 import { redirect } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const Navbar = () => {
   const isMobile = useIsMobile();
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const user = {
-    name: "Kundalik Jadhav",
-    email: "jk@fm.com",
-    avatar: "https://avatars.githubusercontent.com/u/167022612",
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch("/api/user");
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        } else {
+          console.error("Failed to fetch user");
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  // Helper function to get user initials
+  const getUserInitials = (name) => {
+    if (!name) return "U";
+    const parts = name.trim().split(" ");
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
   };
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -69,9 +96,9 @@ const Navbar = () => {
                       className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                     >
                       <Avatar className="h-8 w-8 rounded-lg grayscale">
-                        <AvatarImage src={user.avatar} alt={user.name} />
+                        <AvatarImage src={user?.image} alt={user?.name} />
                         <AvatarFallback className="rounded-lg">
-                          CN
+                          {user ? getUserInitials(user.name) : "U"}
                         </AvatarFallback>
                       </Avatar>
                     </SidebarMenuButton>
@@ -85,17 +112,17 @@ const Navbar = () => {
                     <DropdownMenuLabel className="p-0 font-normal">
                       <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                         <Avatar className="h-8 w-8 rounded-lg">
-                          <AvatarImage src={user.avatar} alt={user.name} />
+                          <AvatarImage src={user?.image} alt={user?.name} />
                           <AvatarFallback className="rounded-lg">
-                            JK
+                            {user ? getUserInitials(user.name) : "U"}
                           </AvatarFallback>
                         </Avatar>
                         <div className="grid flex-1 text-left text-sm leading-tight">
                           <span className="truncate font-medium">
-                            {user.name}
+                            {user?.name || "Loading..."}
                           </span>
                           <span className="text-muted-foreground truncate text-xs">
-                            {user.email}
+                            {user?.email || ""}
                           </span>
                         </div>
                       </div>

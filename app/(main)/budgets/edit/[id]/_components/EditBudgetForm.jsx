@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { BudgetForm } from "../../_components/BudgetForm";
+import { BudgetForm } from "../../../_components/BudgetForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function EditBudgetForm({ initialBudget, categories }) {

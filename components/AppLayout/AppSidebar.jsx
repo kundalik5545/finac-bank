@@ -27,14 +27,33 @@ import {
 import Link from "next/link";
 import { NavMain } from "./NavMain";
 import { NavUser } from "./NavUser";
+import { useEffect, useState } from "react";
 
 export function AppSidebar() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch("/api/user");
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        } else {
+          console.error("Failed to fetch user");
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
   const data = {
-    user: {
-      name: "Kundalik Jadhav",
-      email: "jk@fm.com",
-      avatar: "https://avatars.githubusercontent.com/u/167022612",
-    },
     navMain: [
       {
         title: "Dashboard",
@@ -128,7 +147,7 @@ export function AppSidebar() {
         <NavMain items={data.navMain} navQuick={navQuick} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        {user && <NavUser user={user} />}
       </SidebarFooter>
     </Sidebar>
   );
