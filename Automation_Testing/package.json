@@ -1,0 +1,33 @@
+{
+  "name": "finac-bank-automation-tests",
+  "version": "1.0.0",
+  "description": "Playwright automation tests for Finac Bank finance application",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:dev": "playwright test --config=config/dev.config.js",
+    "test:qa": "playwright test --config=config/qa.config.js",
+    "test:prod": "playwright test --config=config/prod.config.js",
+    "test:api": "playwright test tests/api",
+    "test:e2e": "playwright test tests/e2e",
+    "report": "playwright show-report",
+    "report:allure": "allure generate reports/allure-results --clean -o reports/allure-report && allure open reports/allure-report"
+  },
+  "keywords": [
+    "playwright",
+    "automation",
+    "testing",
+    "e2e"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "allure-playwright": "^2.13.0",
+    "dotenv": "^16.4.5"
+  }
+}
+

@@ -1,0 +1,99 @@
+{
+  "validUsers": [
+    {
+      "email": "test@example.com",
+      "password": "Test123!",
+      "name": "Test User"
+    },
+    {
+      "email": "user1@test.com",
+      "password": "Password123!",
+      "name": "User One"
+    },
+    {
+      "email": "user2@test.com",
+      "password": "SecurePass456!",
+      "name": "User Two"
+    }
+  ],
+  "invalidUsers": [
+    {
+      "email": "invalid@test.com",
+      "password": "wrongpassword",
+      "error": "Invalid credentials"
+    },
+    {
+      "email": "nonexistent@test.com",
+      "password": "Test123!",
+      "error": "Invalid credentials"
+    },
+    {
+      "email": "",
+      "password": "Test123!",
+      "error": "Email is required"
+    },
+    {
+      "email": "test@example.com",
+      "password": "",
+      "error": "Password is required"
+    },
+    {
+      "email": "invalid-email",
+      "password": "Test123!",
+      "error": "Please enter a valid email address"
+    }
+  ],
+  "signUpUsers": [
+    {
+      "name": "New User",
+      "email": "newuser@test.com",
+      "password": "NewUser123!",
+      "expectedResult": "success"
+    },
+    {
+      "name": "Another User",
+      "email": "another@test.com",
+      "password": "Another123!",
+      "expectedResult": "success"
+    }
+  ],
+  "signUpInvalidUsers": [
+    {
+      "name": "",
+      "email": "test@test.com",
+      "password": "Test123!",
+      "error": "Name must be at least 2 characters"
+    },
+    {
+      "name": "Test",
+      "email": "invalid-email",
+      "password": "Test123!",
+      "error": "Please enter a valid email address"
+    },
+    {
+      "name": "Test",
+      "email": "test@test.com",
+      "password": "short",
+      "error": "Password must be at least 8 characters"
+    },
+    {
+      "name": "Test",
+      "email": "test@test.com",
+      "password": "lowercase123",
+      "error": "Password must contain at least one uppercase letter"
+    },
+    {
+      "name": "Test",
+      "email": "test@test.com",
+      "password": "UPPERCASE123",
+      "error": "Password must contain at least one lowercase letter"
+    },
+    {
+      "name": "Test",
+      "email": "test@test.com",
+      "password": "NoNumbers!",
+      "error": "Password must contain at least one number"
+    }
+  ]
+}
+

@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Test results
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Reports
+reports/html-report/
+reports/allure-results/
+reports/allure-report/
+
+# Screenshots and videos
+screenshots/
+videos/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Coverage
+coverage/
+.nyc_output/
+

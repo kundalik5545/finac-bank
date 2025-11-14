@@ -1,0 +1,98 @@
+{
+  "validBudgets": [
+    {
+      "amount": 50000,
+      "month": 1,
+      "year": 2024,
+      "categoryId": "",
+      "alertThreshold": 80,
+      "description": "Monthly Food Budget",
+      "isActive": true
+    },
+    {
+      "amount": 20000,
+      "month": 1,
+      "year": 2024,
+      "categoryId": "",
+      "alertThreshold": 75,
+      "description": "Transportation Budget",
+      "isActive": true
+    },
+    {
+      "amount": 10000,
+      "month": 2,
+      "year": 2024,
+      "categoryId": "",
+      "alertThreshold": 90,
+      "description": "Entertainment Budget",
+      "isActive": true
+    },
+    {
+      "amount": 30000,
+      "month": 1,
+      "year": 2024,
+      "categoryId": "",
+      "alertThreshold": 85,
+      "description": "General Monthly Budget",
+      "isActive": false
+    }
+  ],
+  "invalidBudgets": [
+    {
+      "amount": 0,
+      "month": 1,
+      "year": 2024,
+      "error": "Amount must be positive"
+    },
+    {
+      "amount": -1000,
+      "month": 1,
+      "year": 2024,
+      "error": "Amount must be positive"
+    },
+    {
+      "amount": 10000,
+      "month": 0,
+      "year": 2024,
+      "error": "Month must be between 1 and 12"
+    },
+    {
+      "amount": 10000,
+      "month": 13,
+      "year": 2024,
+      "error": "Month must be between 1 and 12"
+    },
+    {
+      "amount": 10000,
+      "month": 1,
+      "year": 1999,
+      "error": "Year must be valid"
+    },
+    {
+      "amount": 10000,
+      "month": 1,
+      "year": 2024,
+      "alertThreshold": 101,
+      "error": "Alert threshold must be between 0 and 100"
+    },
+    {
+      "amount": 10000,
+      "month": 1,
+      "year": 2024,
+      "alertThreshold": -1,
+      "error": "Alert threshold must be between 0 and 100"
+    }
+  ],
+  "updateBudgets": [
+    {
+      "amount": 60000,
+      "alertThreshold": 85,
+      "description": "Updated Food Budget"
+    },
+    {
+      "amount": 25000,
+      "isActive": false
+    }
+  ]
+}
+

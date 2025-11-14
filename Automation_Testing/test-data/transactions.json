@@ -1,0 +1,135 @@
+{
+  "validTransactions": [
+    {
+      "amount": 5000,
+      "currency": "INR",
+      "type": "INCOME",
+      "status": "COMPLETED",
+      "date": "2024-01-15",
+      "description": "Salary",
+      "paymentMethod": "ONLINE",
+      "categoryId": "",
+      "subCategoryId": ""
+    },
+    {
+      "amount": 2500,
+      "currency": "INR",
+      "type": "EXPENSE",
+      "status": "COMPLETED",
+      "date": "2024-01-16",
+      "description": "Grocery Shopping",
+      "paymentMethod": "UPI",
+      "categoryId": "",
+      "subCategoryId": ""
+    },
+    {
+      "amount": 10000,
+      "currency": "INR",
+      "type": "TRANSFER",
+      "status": "COMPLETED",
+      "date": "2024-01-17",
+      "description": "Transfer to savings",
+      "paymentMethod": "ONLINE",
+      "categoryId": "",
+      "subCategoryId": ""
+    },
+    {
+      "amount": 50000,
+      "currency": "INR",
+      "type": "INVESTMENT",
+      "status": "COMPLETED",
+      "date": "2024-01-18",
+      "description": "Mutual Fund Investment",
+      "paymentMethod": "ONLINE",
+      "categoryId": "",
+      "subCategoryId": ""
+    },
+    {
+      "amount": 1500,
+      "currency": "INR",
+      "type": "EXPENSE",
+      "status": "PENDING",
+      "date": "2024-01-19",
+      "description": "Restaurant Bill",
+      "paymentMethod": "CARD",
+      "categoryId": "",
+      "subCategoryId": ""
+    },
+    {
+      "amount": 500,
+      "currency": "INR",
+      "type": "EXPENSE",
+      "status": "COMPLETED",
+      "date": "2024-01-20",
+      "description": "Cash Payment",
+      "paymentMethod": "CASH",
+      "categoryId": "",
+      "subCategoryId": ""
+    }
+  ],
+  "invalidTransactions": [
+    {
+      "amount": 0,
+      "currency": "INR",
+      "type": "EXPENSE",
+      "error": "Amount must be positive"
+    },
+    {
+      "amount": -1000,
+      "currency": "INR",
+      "type": "EXPENSE",
+      "error": "Amount must be positive"
+    },
+    {
+      "amount": 1000,
+      "currency": "",
+      "type": "EXPENSE",
+      "error": "Currency is required"
+    },
+    {
+      "amount": 1000,
+      "currency": "INR",
+      "type": "",
+      "error": "Transaction type is required"
+    }
+  ],
+  "updateTransactions": [
+    {
+      "amount": 6000,
+      "description": "Updated Salary",
+      "status": "COMPLETED"
+    },
+    {
+      "amount": 3000,
+      "description": "Updated Expense"
+    }
+  ],
+  "filterTransactions": [
+    {
+      "type": "INCOME",
+      "expectedCount": ">0"
+    },
+    {
+      "type": "EXPENSE",
+      "expectedCount": ">0"
+    },
+    {
+      "status": "COMPLETED",
+      "expectedCount": ">0"
+    },
+    {
+      "status": "PENDING",
+      "expectedCount": ">=0"
+    },
+    {
+      "paymentMethod": "UPI",
+      "expectedCount": ">=0"
+    },
+    {
+      "dateFrom": "2024-01-01",
+      "dateTo": "2024-01-31",
+      "expectedCount": ">0"
+    }
+  ]
+}
+

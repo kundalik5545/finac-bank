@@ -1,0 +1,116 @@
+{
+  "validInvestments": [
+    {
+      "name": "Reliance Industries",
+      "type": "STOCKS",
+      "symbol": "RELIANCE",
+      "quantity": 10,
+      "purchasePrice": 2500,
+      "currentPrice": 2800,
+      "purchaseDate": "2024-01-01",
+      "description": "Long term investment",
+      "notes": "Blue chip stock"
+    },
+    {
+      "name": "SBI Mutual Fund",
+      "type": "MUTUAL_FUNDS",
+      "quantity": 100,
+      "purchasePrice": 50,
+      "currentPrice": 55,
+      "purchaseDate": "2024-01-15",
+      "description": "Equity mutual fund"
+    },
+    {
+      "name": "Gold ETF",
+      "type": "GOLD",
+      "quantity": 5,
+      "purchasePrice": 5000,
+      "currentPrice": 5200,
+      "purchaseDate": "2024-01-10",
+      "description": "Gold investment"
+    },
+    {
+      "name": "Fixed Deposit",
+      "type": "FIXED_DEPOSIT",
+      "quantity": 1,
+      "purchasePrice": 100000,
+      "currentPrice": 105000,
+      "purchaseDate": "2024-01-05",
+      "description": "1 year FD",
+      "notes": "5% annual interest"
+    },
+    {
+      "name": "Bitcoin",
+      "type": "CRYPTO",
+      "symbol": "BTC",
+      "quantity": 0.5,
+      "purchasePrice": 3000000,
+      "currentPrice": 3500000,
+      "purchaseDate": "2024-01-20",
+      "description": "Cryptocurrency investment"
+    },
+    {
+      "name": "Provident Fund",
+      "type": "PF",
+      "quantity": 1,
+      "purchasePrice": 500000,
+      "currentPrice": 550000,
+      "purchaseDate": "2023-01-01",
+      "description": "Employee PF"
+    }
+  ],
+  "invalidInvestments": [
+    {
+      "name": "",
+      "type": "STOCKS",
+      "quantity": 10,
+      "purchasePrice": 1000,
+      "purchaseDate": "2024-01-01",
+      "error": "Name is required"
+    },
+    {
+      "name": "Test Investment",
+      "type": "",
+      "quantity": 10,
+      "purchasePrice": 1000,
+      "purchaseDate": "2024-01-01",
+      "error": "Investment type is required"
+    },
+    {
+      "name": "Test Investment",
+      "type": "STOCKS",
+      "quantity": 0,
+      "purchasePrice": 1000,
+      "purchaseDate": "2024-01-01",
+      "error": "Quantity must be positive"
+    },
+    {
+      "name": "Test Investment",
+      "type": "STOCKS",
+      "quantity": 10,
+      "purchasePrice": 0,
+      "purchaseDate": "2024-01-01",
+      "error": "Purchase price must be positive"
+    },
+    {
+      "name": "Test Investment",
+      "type": "STOCKS",
+      "quantity": 10,
+      "purchasePrice": 1000,
+      "currentPrice": -100,
+      "purchaseDate": "2024-01-01",
+      "error": "Current price must be positive"
+    }
+  ],
+  "updateInvestments": [
+    {
+      "currentPrice": 3000,
+      "notes": "Updated notes"
+    },
+    {
+      "quantity": 15,
+      "currentPrice": 2900
+    }
+  ]
+}
+

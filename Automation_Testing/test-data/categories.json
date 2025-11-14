@@ -1,0 +1,113 @@
+{
+  "validCategories": [
+    {
+      "name": "Food & Dining",
+      "type": "EXPENSE",
+      "color": "#FF5733",
+      "icon": "utensils"
+    },
+    {
+      "name": "Salary",
+      "type": "INCOME",
+      "color": "#33FF57",
+      "icon": "dollar-sign"
+    },
+    {
+      "name": "Bills & Utilities",
+      "type": "EXPENSE",
+      "color": "#3357FF",
+      "icon": "file-text"
+    },
+    {
+      "name": "Transportation",
+      "type": "EXPENSE",
+      "color": "#FF33F5",
+      "icon": "car"
+    },
+    {
+      "name": "Shopping",
+      "type": "EXPENSE",
+      "color": "#F5FF33",
+      "icon": "shopping-bag"
+    },
+    {
+      "name": "Investment Returns",
+      "type": "INCOME",
+      "color": "#33FFF5",
+      "icon": "trending-up"
+    },
+    {
+      "name": "Transfer",
+      "type": "TRANSFER",
+      "color": "#FF8C33",
+      "icon": "arrow-left-right"
+    },
+    {
+      "name": "Stocks",
+      "type": "INVESTMENT",
+      "color": "#8C33FF",
+      "icon": "bar-chart"
+    }
+  ],
+  "invalidCategories": [
+    {
+      "name": "",
+      "type": "EXPENSE",
+      "error": "Name is required"
+    },
+    {
+      "name": "Test",
+      "type": "",
+      "error": "Category type is required"
+    },
+    {
+      "name": "Test",
+      "type": "EXPENSE",
+      "color": "invalid-color",
+      "error": "Color must be a valid hex color"
+    },
+    {
+      "name": "Test",
+      "type": "EXPENSE",
+      "color": "#FF",
+      "error": "Color must be a valid hex color"
+    }
+  ],
+  "updateCategories": [
+    {
+      "name": "Updated Food Category",
+      "color": "#FF0000"
+    },
+    {
+      "name": "Updated Salary",
+      "icon": "wallet"
+    }
+  ],
+  "subCategories": [
+    {
+      "name": "Restaurants",
+      "categoryId": "",
+      "color": "#FF5733",
+      "icon": "utensils"
+    },
+    {
+      "name": "Groceries",
+      "categoryId": "",
+      "color": "#FF8C33",
+      "icon": "shopping-cart"
+    },
+    {
+      "name": "Electricity",
+      "categoryId": "",
+      "color": "#3357FF",
+      "icon": "zap"
+    },
+    {
+      "name": "Water",
+      "categoryId": "",
+      "color": "#33F5FF",
+      "icon": "droplet"
+    }
+  ]
+}
+

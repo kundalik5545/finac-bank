@@ -1,0 +1,100 @@
+{
+  "validBankAccounts": [
+    {
+      "name": "HDFC Savings",
+      "type": "BANK",
+      "currency": "INR",
+      "balance": 50000,
+      "isActive": true,
+      "isPrimary": false,
+      "ifscCode": "HDFC0001234",
+      "branch": "Mumbai",
+      "bankAccount": "1234567890"
+    },
+    {
+      "name": "ICICI Current",
+      "type": "BANK",
+      "currency": "INR",
+      "balance": 100000,
+      "isActive": true,
+      "isPrimary": true,
+      "ifscCode": "ICIC0005678",
+      "branch": "Delhi",
+      "bankAccount": "9876543210"
+    },
+    {
+      "name": "Paytm Wallet",
+      "type": "WALLET",
+      "currency": "INR",
+      "balance": 5000,
+      "isActive": true,
+      "isPrimary": false
+    },
+    {
+      "name": "Cash",
+      "type": "CASH",
+      "currency": "INR",
+      "balance": 10000,
+      "isActive": true,
+      "isPrimary": false
+    },
+    {
+      "name": "HDFC Credit Card",
+      "type": "CREDIT_CARD",
+      "currency": "INR",
+      "balance": 0,
+      "isActive": true,
+      "isPrimary": false,
+      "bankAccount": "4532123456789012"
+    },
+    {
+      "name": "USD Account",
+      "type": "BANK",
+      "currency": "USD",
+      "balance": 1000,
+      "isActive": true,
+      "isPrimary": false
+    }
+  ],
+  "invalidBankAccounts": [
+    {
+      "name": "",
+      "type": "BANK",
+      "currency": "INR",
+      "balance": 0,
+      "error": "Name is required"
+    },
+    {
+      "name": "A",
+      "type": "BANK",
+      "currency": "INR",
+      "balance": 0,
+      "error": "Name must be at least 2 characters"
+    },
+    {
+      "name": "Test Bank",
+      "type": "",
+      "currency": "INR",
+      "balance": 0,
+      "error": "Account type is required"
+    },
+    {
+      "name": "Test Bank",
+      "type": "BANK",
+      "currency": "INR",
+      "balance": -1000,
+      "error": "Balance cannot be negative"
+    }
+  ],
+  "updateBankAccounts": [
+    {
+      "name": "Updated Bank Name",
+      "balance": 75000,
+      "isActive": false
+    },
+    {
+      "name": "Updated Wallet",
+      "balance": 15000
+    }
+  ]
+}
