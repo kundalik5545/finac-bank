@@ -355,30 +355,54 @@ export async function POST(request) {
     });
 
     // Check and update budgets if transaction is EXPENSE and COMPLETED
-    if (result.type === "EXPENSE" && result.status === "COMPLETED" && result.categoryId) {
+    if (result.type === "EXPENSE" && result.status === "COMPLETED") {
       try {
         const transactionDate = new Date(result.date);
         const month = transactionDate.getMonth() + 1;
         const year = transactionDate.getFullYear();
 
-        // Find matching budget
-        const budget = await prisma.budget.findFirst({
+        const budgetsToUpdate = [];
+
+        // Find category-specific budget if transaction has a category
+        if (result.categoryId) {
+          const categoryBudget = await prisma.budget.findFirst({
+            where: {
+              userId: session.user.id,
+              categoryId: result.categoryId,
+              month,
+              year,
+              isActive: true,
+            },
+          });
+
+          if (categoryBudget) {
+            budgetsToUpdate.push(categoryBudget);
+          }
+        }
+
+        // Always check for overall budget (categoryId is null)
+        const overallBudget = await prisma.budget.findFirst({
           where: {
             userId: session.user.id,
-            categoryId: result.categoryId,
+            categoryId: null,
             month,
             year,
             isActive: true,
           },
         });
 
-        if (budget) {
-          // Update budget totals
-          const { updateBudgetTotals } = await import("@/action/budget");
+        if (overallBudget) {
+          budgetsToUpdate.push(overallBudget);
+        }
+
+        // Update all affected budgets
+        const { updateBudgetTotals } = await import("@/action/budget");
+        const { checkAndSendBudgetAlerts } = await import("@/lib/budget-alerts");
+
+        for (const budget of budgetsToUpdate) {
           await updateBudgetTotals(budget.id);
 
           // Check and send alerts (async, don't wait)
-          const { checkAndSendBudgetAlerts } = await import("@/lib/budget-alerts");
           checkAndSendBudgetAlerts(budget.id, session.user.id).catch((err) => {
             console.error("Error sending budget alerts:", err);
           });

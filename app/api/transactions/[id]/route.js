@@ -182,7 +182,7 @@ export async function PATCH(request, { params }) {
         // Get affected budgets (old and new category/month/year)
         const budgetsToUpdate = [];
 
-        // New budget
+        // New category-specific budget
         if (result.categoryId) {
           const newBudget = await prisma.budget.findFirst({
             where: {
@@ -193,15 +193,32 @@ export async function PATCH(request, { params }) {
               isActive: true,
             },
           });
-          if (newBudget) budgetsToUpdate.push(newBudget);
+          if (newBudget && !budgetsToUpdate.find((b) => b.id === newBudget.id)) {
+            budgetsToUpdate.push(newBudget);
+          }
         }
 
-        // Old budget (if category or date changed)
+        // New overall budget (always check)
+        const newOverallBudget = await prisma.budget.findFirst({
+          where: {
+            userId: session.user.id,
+            categoryId: null,
+            month,
+            year,
+            isActive: true,
+          },
+        });
+        if (newOverallBudget && !budgetsToUpdate.find((b) => b.id === newOverallBudget.id)) {
+          budgetsToUpdate.push(newOverallBudget);
+        }
+
+        // Old budgets (if category or date changed)
         if (oldTransaction) {
           const oldDate = new Date(existingTransaction.date);
           const oldMonth = oldDate.getMonth() + 1;
           const oldYear = oldDate.getFullYear();
 
+          // Old category-specific budget
           if (
             (oldTransaction.categoryId !== result.categoryId ||
               oldMonth !== month ||
@@ -221,9 +238,28 @@ export async function PATCH(request, { params }) {
               budgetsToUpdate.push(oldBudget);
             }
           }
+
+          // Old overall budget (if date changed)
+          if (oldMonth !== month || oldYear !== year) {
+            const oldOverallBudget = await prisma.budget.findFirst({
+              where: {
+                userId: session.user.id,
+                categoryId: null,
+                month: oldMonth,
+                year: oldYear,
+                isActive: true,
+              },
+            });
+            if (oldOverallBudget && !budgetsToUpdate.find((b) => b.id === oldOverallBudget.id)) {
+              budgetsToUpdate.push(oldOverallBudget);
+            }
+          }
         }
 
         // Update all affected budgets
+        const { updateBudgetTotals } = await import("@/action/budget");
+        const { checkAndSendBudgetAlerts } = await import("@/lib/budget-alerts");
+
         for (const budget of budgetsToUpdate) {
           await updateBudgetTotals(budget.id);
           // Check and send alerts (async)
@@ -312,25 +348,49 @@ export async function DELETE(request, { params }) {
     // Recalculate budgets if deleted transaction affected budgets
     if (
       existingTransaction.type === "EXPENSE" &&
-      existingTransaction.status === "COMPLETED" &&
-      existingTransaction.categoryId
+      existingTransaction.status === "COMPLETED"
     ) {
       try {
         const transactionDate = new Date(existingTransaction.date);
         const month = transactionDate.getMonth() + 1;
         const year = transactionDate.getFullYear();
 
-        const budget = await prisma.budget.findFirst({
+        const budgetsToUpdate = [];
+
+        // Category-specific budget
+        if (existingTransaction.categoryId) {
+          const categoryBudget = await prisma.budget.findFirst({
+            where: {
+              userId: session.user.id,
+              categoryId: existingTransaction.categoryId,
+              month,
+              year,
+              isActive: true,
+            },
+          });
+
+          if (categoryBudget) {
+            budgetsToUpdate.push(categoryBudget);
+          }
+        }
+
+        // Overall budget (always check)
+        const overallBudget = await prisma.budget.findFirst({
           where: {
             userId: session.user.id,
-            categoryId: existingTransaction.categoryId,
+            categoryId: null,
             month,
             year,
             isActive: true,
           },
         });
 
-        if (budget) {
+        if (overallBudget) {
+          budgetsToUpdate.push(overallBudget);
+        }
+
+        // Update all affected budgets
+        for (const budget of budgetsToUpdate) {
           await updateBudgetTotals(budget.id);
           // Check and send alerts (async)
           checkAndSendBudgetAlerts(budget.id, session.user.id).catch((err) => {

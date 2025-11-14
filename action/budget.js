@@ -296,15 +296,6 @@ export async function updateBudgetTotals(budgetId) {
   try {
     const budget = await prisma.budget.findUnique({
       where: { id: budgetId },
-      include: {
-        transactions: {
-          where: {
-            status: "COMPLETED",
-            isActive: true,
-            type: "EXPENSE",
-          },
-        },
-      },
     });
 
     if (!budget) {
@@ -314,22 +305,42 @@ export async function updateBudgetTotals(budgetId) {
     const budgetMonth = budget.month;
     const budgetYear = budget.year;
 
+    if (!budgetMonth || !budgetYear) {
+      throw new Error("Budget must have month and year");
+    }
+
+    // Calculate date range for the budget month
+    const startDate = new Date(budgetYear, budgetMonth - 1, 1);
+    const endDate = new Date(budgetYear, budgetMonth, 0, 23, 59, 59);
+
+    // Query transactions directly based on budget criteria
+    const whereClause = {
+      userId: budget.userId,
+      status: "COMPLETED",
+      isActive: true,
+      type: "EXPENSE",
+      date: {
+        gte: startDate,
+        lte: endDate,
+      },
+      // If budget has categoryId, filter by it; otherwise get all expenses
+      ...(budget.categoryId ? { categoryId: budget.categoryId } : {}),
+    };
+
+    const transactions = await prisma.transaction.findMany({
+      where: whereClause,
+    });
+
     // Calculate totals for transactions within budget period
     let totalWithdrawals = 0;
     let totalDeposits = 0;
 
-    budget.transactions.forEach((tx) => {
-      const txDate = new Date(tx.date);
-      const txMonth = txDate.getMonth() + 1;
-      const txYear = txDate.getFullYear();
-
-      if (budgetMonth && budgetYear && txMonth === budgetMonth && txYear === budgetYear) {
-        const amount = Number(tx.amount);
-        if (tx.type === "EXPENSE") {
-          totalWithdrawals += amount;
-        } else if (tx.type === "INCOME") {
-          totalDeposits += amount;
-        }
+    transactions.forEach((tx) => {
+      const amount = Number(tx.amount);
+      if (tx.type === "EXPENSE") {
+        totalWithdrawals += amount;
+      } else if (tx.type === "INCOME") {
+        totalDeposits += amount;
       }
     });
 
