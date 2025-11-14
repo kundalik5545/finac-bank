@@ -1,7 +1,16 @@
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 
-dotenv.config({ path: '.env.prod' });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load .env file from automation_testing directory
+dotenv.config({ path: resolve(__dirname, '..', '.env') });
+
+// Debug: Log base URL (remove in production)
+console.log('🔧 Prod Base URL loaded:', process.env.PROD_BASE_URL || process.env.BASE_URL || 'https://finac-bank.com (default)');
 
 export default defineConfig({
   testDir: './tests',
@@ -17,7 +26,7 @@ export default defineConfig({
   ],
   
   use: {
-    baseURL: process.env.PROD_BASE_URL || 'https://finac-bank.com',
+    baseURL: process.env.PROD_BASE_URL || process.env.BASE_URL || 'https://finac-bank.com',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

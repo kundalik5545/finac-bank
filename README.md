@@ -1,10 +1,12 @@
 # Finac Bank - Personal Finance Tracker App
 
 ## Note
+
 1. Some work is done
 2. created accounts page, transactions, and todo.
 
-3. 
+3.
+
 ## Setup
 
 1. Create Next Js project
@@ -158,3 +160,5 @@ export default prisma;
 ```
 
 ## Able to create user and fetch it on UI
+
+npx playwright test tests/ui/auth/login.spec.js --grep "should validate empty email field" --headed

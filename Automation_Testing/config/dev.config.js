@@ -1,7 +1,16 @@
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 
-dotenv.config({ path: '.env.dev' });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load .env file from automation_testing directory
+dotenv.config({ path: resolve(__dirname, '..', '.env') });
+
+// Debug: Log base URL (remove in production)
+console.log('🔧 Dev Base URL loaded:', process.env.DEV_BASE_URL || process.env.BASE_URL || 'http://localhost:3000 (default)');
 
 export default defineConfig({
   testDir: './tests',
@@ -17,7 +26,7 @@ export default defineConfig({
   ],
   
   use: {
-    baseURL: process.env.DEV_BASE_URL || 'http://localhost:3000',
+    baseURL: process.env.DEV_BASE_URL || process.env.BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

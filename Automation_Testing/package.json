@@ -1,6 +1,7 @@
 {
   "name": "finac-bank-automation-tests",
   "version": "1.0.0",
+  "type": "module",
   "description": "Playwright automation tests for Finac Bank finance application",
   "main": "index.js",
   "scripts": {

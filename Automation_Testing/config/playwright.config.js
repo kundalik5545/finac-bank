@@ -1,8 +1,16 @@
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 
-// Load environment variables
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load environment variables from automation_testing directory
+dotenv.config({ path: resolve(__dirname, '..', '.env') });
+
+// Debug: Log base URL (remove in production)
+console.log('🔧 Base URL loaded:', process.env.BASE_URL || 'http://localhost:3000 (default)');
 
 /**
  * Read environment variables from file.

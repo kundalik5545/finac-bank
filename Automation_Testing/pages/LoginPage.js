@@ -1,4 +1,4 @@
-import { BasePage } from './BasePage.js';
+import { BasePage } from "./BasePage.js";
 
 /**
  * Login Page Object Model
@@ -7,7 +7,7 @@ import { BasePage } from './BasePage.js';
 export class LoginPage extends BasePage {
   constructor(page) {
     super(page);
-    
+
     // XPath selectors
     this.selectors = {
       emailInput: '//input[@type="email"]',
@@ -15,12 +15,14 @@ export class LoginPage extends BasePage {
       signInButton: '//button[contains(text(), "Sign In")]',
       signUpLink: '//a[contains(text(), "Sign up")]',
       goHomeLink: '//span[contains(text(), "go home")]',
-      cardTitle: '//h2[contains(text(), "Sign In")]',
+      cardTitle: '//div[contains(text(), "Sign In")]',
       emailLabel: '//label[contains(text(), "Email")]',
       passwordLabel: '//label[contains(text(), "Password")]',
-      emailError: '//input[@type="email"]/following-sibling::p[contains(@class, "text-red-500")]',
-      passwordError: '//input[@type="password"]/following-sibling::p[contains(@class, "text-red-500")]',
-      loadingSpinner: '//button[contains(@disabled, "")]//*[contains(@class, "animate-spin")]',
+      emailError:
+        '  //p[contains(text(), "Please enter a valid email address")]',
+      passwordError: '//p[contains(text(), "Password is required")]',
+      loadingSpinner:
+        '//button[contains(@disabled, "")]//*[contains(@class, "animate-spin")]',
     };
   }
 
@@ -28,7 +30,7 @@ export class LoginPage extends BasePage {
    * Navigate to login page
    */
   async navigateToLogin() {
-    await this.navigate('/sign-in');
+    await this.navigate("/sign-in");
     await this.waitForPageLoad();
   }
 
@@ -111,4 +113,3 @@ export class LoginPage extends BasePage {
     await this.waitForURL(/\/dashboard/, 10000);
   }
 }
-
